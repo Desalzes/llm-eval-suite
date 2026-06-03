@@ -1,0 +1,12 @@
+{
+  "id": "your-task-id",
+  "title": "Short title of the challenge",
+  "description": "Tell the AI what to accomplish. State the goal only - no hints about how.",
+  "repo": "repo",
+  "test_command": ["python", "-m", "unittest", "discover"],
+  "allowed_paths": ["solution.py"],
+  "success_criteria": [
+    "All tests pass.",
+    "Only solution.py is modified."
+  ]
+}
