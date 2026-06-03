@@ -1,0 +1,5 @@
+display_name: "Research Memo Builder"
+short_description: "Old memo helper."
+default_prompt: "Write a memo about this."
+icon: "icons/research-brief.svg"
+brand_color: "#335c67"

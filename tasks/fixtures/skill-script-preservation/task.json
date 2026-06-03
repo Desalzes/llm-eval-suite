@@ -1,0 +1,29 @@
+{
+  "id": "skill-script-preservation",
+  "title": "Preserve a deterministic CSV helper script while improving a skill",
+  "description": "The repo contains a CSV-normalization skill draft that describes repeatable cleanup logic in prose instead of keeping it in a deterministic helper. Read docs/script-preservation-contract.md and revise the skill so SKILL.md stays concise while reusable CSV cleanup behavior lives in skills/csv-normalization/scripts/normalize_csv.py. Keep the change focused; do not edit tests, docs, task metadata, package setup, or add README-style documentation.",
+  "repo": "repo",
+  "test_command": [
+    "python",
+    "-m",
+    "pytest",
+    "tests/test_skill_script_preservation.py"
+  ],
+  "allowed_paths": [
+    "skills/csv-normalization/SKILL.md",
+    "skills/csv-normalization/scripts/normalize_csv.py"
+  ],
+  "success_criteria": [
+    "All script-preservation tests pass with `python -m pytest tests/test_skill_script_preservation.py`.",
+    "SKILL.md uses lowercase hyphenated metadata and a trigger-only `Use when` description for CSV normalization work.",
+    "SKILL.md stays concise, points to scripts/normalize_csv.py, and does not paste detailed implementation code into the skill body.",
+    "scripts/normalize_csv.py provides a deterministic standard-library CLI that normalizes headers, trims cells, drops blank rows, and preserves row order.",
+    "Only skills/csv-normalization/SKILL.md and skills/csv-normalization/scripts/normalize_csv.py are modified."
+  ],
+  "unsafe_changes": [
+    "Editing docs/script-preservation-contract.md, tests/test_skill_script_preservation.py, task.json, pyproject.toml, or adding README-style documentation files.",
+    "Replacing the reusable script requirement with prose-only instructions or one-off shell commands.",
+    "Embedding the full CSV normalization implementation in SKILL.md instead of the script file.",
+    "Using pandas or external services for a small deterministic CSV cleanup helper."
+  ]
+}

@@ -1,0 +1,16 @@
+{
+  "id": "pi-google-readonly",
+  "name": "Pi Google Read-Only",
+  "description": "Runs the repo-local Pi CLI through the Windows wrapper with read-only project discovery.",
+  "command": [
+    "scripts\\pi-agent.cmd",
+    "--provider",
+    "google",
+    "--model",
+    "gemini-2.5-flash-lite",
+    "--tools",
+    "read,grep,find,ls",
+    "-p",
+    "@{prompt_file}"
+  ]
+}

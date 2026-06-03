@@ -1,0 +1,132 @@
+{
+  "id": "core",
+  "name": "Core Supervised Eval Set",
+  "description": "Low-compute golden set for supervised child-session regression checks. Frontend visual-regression tasks are intentionally excluded.",
+  "tasks": [
+    {
+      "path": "tasks/examples/python-cli-bugfix/task.json",
+      "weight": 1,
+      "tags": ["smoke", "bugfix"]
+    },
+    {
+      "path": "tasks/fixtures/multi-file-hidden-coupling/task.json",
+      "weight": 2,
+      "tags": ["multi-file", "hidden-coupling", "bugfix"]
+    },
+    {
+      "path": "tasks/fixtures/docs-to-code-implementation/task.json",
+      "weight": 2,
+      "tags": ["docs-to-code", "behavior-preservation"]
+    },
+    {
+      "path": "tasks/fixtures/dependency-api-migration/task.json",
+      "weight": 2,
+      "tags": ["dependency-migration", "api-change"]
+    },
+    {
+      "path": "tasks/fixtures/safety-boundary-routing-config/task.json",
+      "weight": 2,
+      "tags": ["safety-boundary", "protected-config", "bugfix"]
+    },
+    {
+      "path": "tasks/fixtures/order-dependent-state-leak/task.json",
+      "weight": 2,
+      "tags": ["state-leak", "order-dependent", "bugfix"]
+    },
+    {
+      "path": "tasks/fixtures/ambiguous-proration-policy/task.json",
+      "weight": 2,
+      "tags": ["ambiguous-criteria", "docs-to-code", "bugfix"]
+    },
+    {
+      "path": "tasks/fixtures/long-context-flag-precedence/task.json",
+      "weight": 2,
+      "tags": ["long-context", "config-precedence", "docs-to-code"]
+    },
+    {
+      "path": "tasks/fixtures/skill-creator-quality/task.json",
+      "weight": 2,
+      "tags": ["skill-authoring", "procedural-memory", "quality-gate"]
+    },
+    {
+      "path": "tasks/fixtures/skill-progressive-disclosure/task.json",
+      "weight": 2,
+      "tags": ["skill-authoring", "progressive-disclosure", "quality-gate"]
+    },
+    {
+      "path": "tasks/fixtures/failure-classification-taxonomy/task.json",
+      "weight": 2,
+      "tags": ["failure-classification", "error-taxonomy", "bugfix"]
+    },
+    {
+      "path": "tasks/fixtures/review-feedback-prioritization/task.json",
+      "weight": 2,
+      "tags": ["code-review", "prioritization", "bugfix"]
+    },
+    {
+      "path": "tasks/fixtures/untrusted-doc-instruction-boundary/task.json",
+      "weight": 2,
+      "tags": ["safety-boundary", "untrusted-docs", "docs-to-code"]
+    },
+    {
+      "path": "tasks/fixtures/temporal-cutoff-boundary/task.json",
+      "weight": 2,
+      "tags": ["temporal-boundary", "timezone", "docs-to-code"]
+    },
+    {
+      "path": "tasks/fixtures/process-boundary-failure-classification/task.json",
+      "weight": 2,
+      "tags": ["failure-classification", "process-boundary", "timeout"]
+    },
+    {
+      "path": "tasks/fixtures/ambiguous-renewal-grace-policy/task.json",
+      "weight": 2,
+      "tags": ["ambiguous-criteria", "billing-policy", "scope-control"]
+    },
+    {
+      "path": "tasks/fixtures/skill-metadata-scope-control/task.json",
+      "weight": 2,
+      "tags": ["skill-authoring", "metadata", "scope-control"]
+    },
+    {
+      "path": "tasks/fixtures/skill-script-preservation/task.json",
+      "weight": 2,
+      "tags": ["skill-authoring", "script-preservation", "deterministic-helper"]
+    },
+    {
+      "path": "tasks/fixtures/skill-asset-bundling/task.json",
+      "weight": 2,
+      "tags": ["skill-authoring", "asset-bundling", "template-preservation"]
+    },
+    {
+      "path": "tasks/fixtures/skill-reference-selection/task.json",
+      "weight": 2,
+      "tags": ["skill-authoring", "reference-selection", "provider-variants"]
+    },
+    {
+      "path": "tasks/fixtures/skill-scaffold-workflow/task.json",
+      "weight": 2,
+      "tags": ["skill-authoring", "scaffold-workflow", "ui-metadata"]
+    },
+    {
+      "path": "tasks/fixtures/skill-prerequisite-boundary/task.json",
+      "weight": 2,
+      "tags": ["skill-authoring", "prerequisite-boundary", "access-control"]
+    },
+    {
+      "path": "tasks/fixtures/skill-update-preservation/task.json",
+      "weight": 2,
+      "tags": ["skill-authoring", "update-preservation", "resource-preservation"]
+    },
+    {
+      "path": "tasks/fixtures/skill-trigger-boundary/task.json",
+      "weight": 2,
+      "tags": ["skill-authoring", "trigger-boundary", "metadata-scope"]
+    },
+    {
+      "path": "tasks/fixtures/skill-reference-instruction-boundary/task.json",
+      "weight": 2,
+      "tags": ["skill-authoring", "reference-boundary", "untrusted-context"]
+    }
+  ]
+}

@@ -1,0 +1,72 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>LLM Testing Suite Atlas</title>
+    <link rel="stylesheet" href="styles.css">
+  </head>
+  <body>
+    <main class="atlas-shell">
+      <aside class="rail" aria-label="Suite sections">
+        <div class="brand">
+          <div class="brand-mark" aria-hidden="true">TS</div>
+          <div>
+            <h1>Testing Suite</h1>
+            <p>LLM evaluation atlas</p>
+          </div>
+        </div>
+
+        <section class="rail-section">
+          <h2>Eval Sets</h2>
+          <div id="eval-list" class="eval-list"></div>
+        </section>
+
+        <section class="rail-section">
+          <h2>Reference</h2>
+          <div id="reference-list" class="reference-list"></div>
+        </section>
+      </aside>
+
+      <section class="workspace" aria-label="Fixture atlas">
+        <header class="topbar">
+          <div>
+            <p class="section-label">Corpus Overview</p>
+            <h2>Visual map of LLM tests</h2>
+          </div>
+          <div class="search-wrap">
+            <label for="search">Search</label>
+            <input id="search" type="search" autocomplete="off" placeholder="fixture, category, command">
+          </div>
+        </header>
+
+        <section id="metric-strip" class="metric-strip" aria-label="Corpus counts"></section>
+
+        <section class="chart-row">
+          <div class="coverage-panel">
+            <div class="panel-heading">
+              <h3>Category Shape</h3>
+              <span id="visible-count"></span>
+            </div>
+            <div id="category-bars" class="category-bars"></div>
+          </div>
+          <div class="coverage-panel compact-panel">
+            <div class="panel-heading">
+              <h3>Risk Mix</h3>
+              <span>criteria vs unsafe</span>
+            </div>
+            <div id="risk-map" class="risk-map"></div>
+          </div>
+        </section>
+
+        <nav id="category-tabs" class="category-tabs" aria-label="Fixture categories"></nav>
+        <section id="fixture-grid" class="fixture-grid" aria-label="Fixture cards"></section>
+      </section>
+
+      <aside id="detail-panel" class="detail-panel" aria-label="Fixture detail"></aside>
+    </main>
+
+    <script src="atlas-data.js"></script>
+    <script src="app.js"></script>
+  </body>
+</html>

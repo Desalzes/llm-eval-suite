@@ -1,0 +1,11 @@
+{
+  "id": "noop",
+  "name": "Noop Profile",
+  "description": "Harness smoke-test profile. It prints the prompt path and does not modify the workspace.",
+  "command": [
+    "python",
+    "-c",
+    "import pathlib, sys; print('noop profile'); print(pathlib.Path(sys.argv[1]).read_text(encoding='utf-8')[:200])",
+    "{prompt_file}"
+  ]
+}

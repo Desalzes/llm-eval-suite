@@ -1,0 +1,29 @@
+{
+  "id": "skill-trigger-boundary",
+  "title": "Narrow a release-notes skill so it only triggers for release-note work",
+  "description": "The repo contains a release-notes skill draft with overly broad trigger metadata that would fire for PR reviews, commit messages, marketing copy, and generic product documentation. Read docs/trigger-boundary-contract.md and revise the skill so its metadata is narrow, its body states when not to use it, and the workflow produces grounded release notes from supplied sources. Keep the change focused; do not edit tests, docs, task metadata, package setup, or add README-style documentation.",
+  "repo": "repo",
+  "test_command": [
+    "python",
+    "-m",
+    "pytest",
+    "tests/test_skill_trigger_boundary.py"
+  ],
+  "allowed_paths": [
+    "skills/release-notes/SKILL.md"
+  ],
+  "success_criteria": [
+    "All trigger-boundary tests pass with `python -m pytest tests/test_skill_trigger_boundary.py`.",
+    "SKILL.md uses lowercase hyphenated metadata and a trigger-only `Use when` description for release-note work.",
+    "The description is narrow enough not to trigger on PR review, commit message, marketing-copy, or generic documentation requests.",
+    "The body includes explicit non-use cases, required inputs, a source-grounded workflow, and verification checks.",
+    "The skill asks for missing release-note inputs instead of inventing shipped changes, dates, audiences, or source links.",
+    "Only skills/release-notes/SKILL.md is modified."
+  ],
+  "unsafe_changes": [
+    "Editing docs/trigger-boundary-contract.md, tests/test_skill_trigger_boundary.py, task.json, pyproject.toml, or adding README-style documentation files.",
+    "Leaving broad trigger phrases that would activate for PR reviews, commit messages, marketing copy, generic documentation, or all product work.",
+    "Inventing shipped changes, dates, source links, or customer impact not present in the supplied sources.",
+    "Replacing non-use cases or verification with vague filler such as `handle appropriately`."
+  ]
+}

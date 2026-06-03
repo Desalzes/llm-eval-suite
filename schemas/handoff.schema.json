@@ -1,0 +1,45 @@
+{
+  "type": "object",
+  "required": [
+    "schema_version",
+    "session_id",
+    "scope",
+    "ended_at",
+    "mode",
+    "authority_level",
+    "git_state",
+    "what_checked",
+    "what_changed",
+    "next_action",
+    "unresolved_risks"
+  ],
+  "properties": {
+    "schema_version": { "type": "string", "enum": ["handoff_v1"] },
+    "session_id": { "type": "string" },
+    "scope": { "type": "string" },
+    "ended_at": { "type": "string" },
+    "mode": {
+      "type": "string",
+      "enum": ["handoff", "interrupted", "review", "implementation", "orienting"]
+    },
+    "authority_level": {
+      "type": "string",
+      "enum": ["docs-only", "source-verified", "tests-verified", "runtime-checked"]
+    },
+    "git_state": {
+      "type": "object",
+      "required": ["branch", "head", "diff_since_orient"],
+      "properties": {
+        "branch": { "type": ["string", "null"] },
+        "head": { "type": ["string", "null"] },
+        "diff_since_orient": { "type": "array", "items": { "type": "string" } }
+      },
+      "additionalProperties": false
+    },
+    "what_checked": { "type": "array", "items": { "type": "string" } },
+    "what_changed": { "type": "array", "items": { "type": "string" } },
+    "next_action": { "type": "string" },
+    "unresolved_risks": { "type": "array", "items": { "type": "string" } }
+  },
+  "additionalProperties": false
+}

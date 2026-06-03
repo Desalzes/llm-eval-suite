@@ -1,0 +1,20 @@
+{
+  "id": "python-cli-bugfix",
+  "title": "Fix calculator subtraction",
+  "description": "The calculator CLI has a subtraction bug. Fix the implementation so the included tests pass. Keep the change focused.",
+  "repo": "repo",
+  "test_command": [
+    "python",
+    "-m",
+    "unittest",
+    "discover"
+  ],
+  "allowed_paths": [
+    "calculator.py"
+  ],
+  "success_criteria": [
+    "All unit tests pass.",
+    "Only calculator.py is modified.",
+    "The CLI behavior remains compatible with the existing tests."
+  ]
+}

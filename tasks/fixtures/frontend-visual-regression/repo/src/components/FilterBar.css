@@ -1,0 +1,167 @@
+.filter-bar {
+  display: grid;
+  grid-template-columns: minmax(220px, 1fr) 330px 180px 96px;
+  gap: 12px;
+  align-items: end;
+  width: 100%;
+  min-height: 100%;
+  padding: 14px;
+  border: 1px solid #d5deea;
+  border-radius: 8px;
+  background: #ffffff;
+}
+
+.filter-group {
+  min-width: 0;
+}
+
+.filter-label {
+  display: block;
+  margin-bottom: 6px;
+  color: #526071;
+  font-size: 12px;
+  font-weight: 800;
+  line-height: 1.15;
+}
+
+.filter-field,
+.filter-apply,
+.filter-segment {
+  height: 40px;
+  border-radius: 6px;
+}
+
+.filter-field {
+  width: 100%;
+  border: 1px solid #b9c4d2;
+  background: #ffffff;
+  color: #172033;
+  padding: 0 11px;
+}
+
+.filter-field:focus-visible,
+.filter-apply:focus-visible,
+.filter-segment:focus-visible {
+  outline: 2px solid #2f6fed;
+  outline-offset: 2px;
+}
+
+.segmented-control {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  border: 1px solid #b9c4d2;
+  border-radius: 6px;
+  overflow: hidden;
+  background: #ffffff;
+}
+
+.filter-segment {
+  min-width: 0;
+  border: 0;
+  border-left: 1px solid #c9d3df;
+  background: #ffffff;
+  color: #344054;
+  font-size: 13px;
+  font-weight: 800;
+  padding: 0 9px;
+}
+
+.filter-segment:first-child {
+  border-left: 0;
+}
+
+.filter-segment.is-active {
+  background: #4f46e5;
+  color: #ffffff;
+  box-shadow: inset 0 -3px 0 rgba(16, 24, 40, 0.26);
+}
+
+.filter-apply {
+  width: 96px;
+  border: 1px solid #30435f;
+  background: #172033;
+  color: #ffffff;
+  font-weight: 800;
+}
+
+@media (max-width: 900px) and (min-width: 700px) {
+  .filter-bar {
+    grid-template-columns: 270px 338px 190px 104px;
+    gap: 8px;
+  }
+
+  .filter-group--search {
+    grid-column: 1;
+    grid-row: 1;
+  }
+
+  .filter-group--status {
+    grid-column: 2;
+    grid-row: 1;
+  }
+
+  .filter-group--range {
+    grid-column: 3;
+    grid-row: 1;
+    width: 190px;
+    margin-left: -142px;
+    z-index: 2;
+  }
+
+  .filter-apply {
+    grid-column: 4;
+    grid-row: 1;
+    justify-self: start;
+    margin-left: -116px;
+    z-index: 3;
+  }
+}
+
+@media (max-width: 699px) {
+  .filter-bar {
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+
+  .filter-group--range,
+  .filter-apply {
+    width: 100%;
+  }
+}
+
+@media (forced-colors: active) {
+  .filter-bar,
+  .segmented-control,
+  .filter-field,
+  .filter-apply {
+    border-color: CanvasText;
+    background: Canvas;
+    color: CanvasText;
+  }
+
+  .filter-label {
+    color: CanvasText;
+  }
+
+  .filter-segment {
+    border-color: CanvasText;
+    background: ButtonFace;
+    color: ButtonText;
+  }
+
+  .filter-segment.is-active {
+    border-color: CanvasText;
+    outline: 0;
+    outline-offset: 0;
+    background: ButtonFace;
+    color: ButtonText;
+    box-shadow: none;
+  }
+
+  .filter-field:focus-visible,
+  .filter-apply:focus-visible,
+  .filter-segment:focus-visible {
+    outline: 2px solid Highlight;
+    outline-offset: 2px;
+  }
+}

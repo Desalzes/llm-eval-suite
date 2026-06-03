@@ -1,0 +1,9 @@
+{
+  "beta": {
+    "audit_export": true,
+    "beta_dashboard": true
+  },
+  "internal": {
+    "search_v2": false
+  }
+}

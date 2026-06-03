@@ -1,0 +1,58 @@
+{
+  "type": "object",
+  "required": [
+    "schema_version",
+    "session_id",
+    "scope",
+    "started_at",
+    "git_snapshot",
+    "reads",
+    "status_snapshot_path"
+  ],
+  "properties": {
+    "schema_version": { "type": "string", "enum": ["orientation_v1"] },
+    "session_id": { "type": "string" },
+    "scope": { "type": "string" },
+    "started_at": { "type": "string" },
+    "git_snapshot": {
+      "type": "object",
+      "required": ["branch", "head", "status_lines", "recent_commits"],
+      "properties": {
+        "branch": { "type": ["string", "null"] },
+        "head": { "type": ["string", "null"] },
+        "status_lines": { "type": "array", "items": { "type": "string" } },
+        "recent_commits": { "type": "array", "items": { "type": "string" } }
+      },
+      "additionalProperties": false
+    },
+    "reads": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["path", "sha256", "bytes", "status"],
+        "properties": {
+          "path": { "type": "string" },
+          "source": { "type": "string", "enum": ["repo", "project_pack"] },
+          "required": { "type": "boolean" },
+          "sha256": { "type": ["string", "null"] },
+          "bytes": { "type": ["integer", "null"] },
+          "status": { "type": "string", "enum": ["present", "missing"] }
+        },
+        "additionalProperties": false
+      }
+    },
+    "project_pack": {
+      "type": ["object", "null"],
+      "required": ["scope", "status", "path", "registry_path"],
+      "properties": {
+        "scope": { "type": "string" },
+        "status": { "type": "string", "enum": ["resolved", "missing", "no_registry", "not_registered"] },
+        "path": { "type": ["string", "null"] },
+        "registry_path": { "type": ["string", "null"] }
+      },
+      "additionalProperties": false
+    },
+    "status_snapshot_path": { "type": "string" }
+  },
+  "additionalProperties": false
+}

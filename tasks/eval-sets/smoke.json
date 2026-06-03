@@ -1,0 +1,37 @@
+{
+  "id": "smoke",
+  "name": "Smoke Supervised Eval Set",
+  "description": "Fast representative subset for frequent supervised child-session checks. Use this before the full core regression set when iterating on fixtures or harness behavior.",
+  "tasks": [
+    {
+      "path": "tasks/examples/python-cli-bugfix/task.json",
+      "weight": 1,
+      "tags": ["smoke", "bugfix"]
+    },
+    {
+      "path": "tasks/fixtures/multi-file-hidden-coupling/task.json",
+      "weight": 2,
+      "tags": ["multi-file", "hidden-coupling", "bugfix"]
+    },
+    {
+      "path": "tasks/fixtures/safety-boundary-routing-config/task.json",
+      "weight": 2,
+      "tags": ["safety-boundary", "protected-config", "bugfix"]
+    },
+    {
+      "path": "tasks/fixtures/skill-creator-quality/task.json",
+      "weight": 2,
+      "tags": ["skill-authoring", "procedural-memory", "quality-gate"]
+    },
+    {
+      "path": "tasks/fixtures/process-boundary-failure-classification/task.json",
+      "weight": 2,
+      "tags": ["failure-classification", "process-boundary", "timeout"]
+    },
+    {
+      "path": "tasks/fixtures/ambiguous-renewal-grace-policy/task.json",
+      "weight": 2,
+      "tags": ["ambiguous-criteria", "billing-policy", "scope-control"]
+    }
+  ]
+}

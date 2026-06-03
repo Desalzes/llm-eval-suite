@@ -1,0 +1,34 @@
+# Runtime artifacts
+.superpowers/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.pytest-tmp/
+pytest-cache-files-*/
+.mypy_cache/
+.ruff_cache/
+
+# Local environments
+.venv/
+venv/
+node_modules/
+
+# Generated run output
+runs/
+agent-runs/
+eval-runs/
+fixture-runs/
+improvement-runs/
+polymarket-runs/
+research-runs/
+supervised-runs/
+terminal-runs/
+output/
+tmp/
+
+# OS/editor noise
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+.vs/

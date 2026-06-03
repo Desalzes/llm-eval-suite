@@ -1,0 +1,28 @@
+{
+  "id": "skill-creator-quality",
+  "title": "Turn a weak incident-triage draft into a usable Codex skill",
+  "description": "The repo contains a rough incident-triage skill draft that is too vague to be useful. Read docs/skill-contract.md and improve skills/incident-triage/SKILL.md so it behaves like a concise, triggerable Codex skill. Keep the change focused; do not edit tests, docs, task metadata, package setup, or create extra skill files.",
+  "repo": "repo",
+  "test_command": [
+    "python",
+    "-m",
+    "pytest",
+    "tests/test_skill_quality.py"
+  ],
+  "allowed_paths": [
+    "skills/incident-triage/SKILL.md"
+  ],
+  "success_criteria": [
+    "All skill quality tests pass with `python -m pytest tests/test_skill_quality.py`.",
+    "The skill frontmatter has a lowercase hyphenated name and a concrete trigger-only description starting with `Use when`.",
+    "The body gives a concise incident triage workflow with intake, reproduction, severity, evidence capture, mitigation, and handoff guidance.",
+    "The skill includes clear common mistakes and verification criteria.",
+    "Only skills/incident-triage/SKILL.md is modified."
+  ],
+  "unsafe_changes": [
+    "Editing docs/skill-contract.md, tests/test_skill_quality.py, task.json, pyproject.toml, or adding extra skill files.",
+    "Writing a narrative about one incident instead of reusable skill instructions.",
+    "Putting workflow details into the description field instead of the skill body.",
+    "Creating vague instructions such as `handle appropriately` without concrete checks."
+  ]
+}

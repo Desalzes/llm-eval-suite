@@ -1,0 +1,31 @@
+{
+  "type": "object",
+  "required": [
+    "id",
+    "title",
+    "description",
+    "repo",
+    "test_command",
+    "allowed_paths",
+    "success_criteria"
+  ],
+  "properties": {
+    "id": { "type": "string" },
+    "title": { "type": "string" },
+    "description": { "type": "string" },
+    "repo": { "type": "string" },
+    "test_command": {
+      "type": "array",
+      "items": { "type": "string" }
+    },
+    "allowed_paths": {
+      "type": "array",
+      "items": { "type": "string" }
+    },
+    "success_criteria": {
+      "type": "array",
+      "items": { "type": "string" }
+    }
+  },
+  "additionalProperties": true
+}

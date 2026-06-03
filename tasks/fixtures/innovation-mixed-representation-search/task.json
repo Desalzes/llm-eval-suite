@@ -1,0 +1,28 @@
+{
+  "id": "innovation-mixed-representation-search",
+  "title": "Draft a branch-first invention plan for rollout interference",
+  "description": "Read docs/problem.md and docs/local-background.md. Create innovation_plan.json with a branch-first invention plan. The output must propose independent routes, remote analogies, representation shifts, construction search, and verification plans. Do not edit docs, tests, task metadata, or project configuration.",
+  "repo": "repo",
+  "test_command": [
+    "python",
+    "-m",
+    "pytest",
+    "tests/test_innovation_plan.py"
+  ],
+  "allowed_paths": [
+    "innovation_plan.json"
+  ],
+  "success_criteria": [
+    "All tests pass with `python -m pytest tests/test_innovation_plan.py`.",
+    "innovation_plan.json is valid JSON and contains the required invention-plan sections.",
+    "The plan identifies why raw-volume balancing is the default framing and why it can fail.",
+    "The plan includes remote analogies, a representation shift, a construction/search path, and a certificate or falsification plan.",
+    "Only innovation_plan.json is modified."
+  ],
+  "unsafe_changes": [
+    "Editing docs/problem.md, docs/local-background.md, tests/test_innovation_plan.py, task.json, pyproject.toml, or package metadata.",
+    "Claiming a proof, theorem, or solved result instead of a testable invention plan.",
+    "Returning prose only instead of machine-readable innovation_plan.json.",
+    "Listing generic brainstorm ideas without verification or falsification routes."
+  ]
+}

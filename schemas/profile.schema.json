@@ -1,0 +1,17 @@
+{
+  "type": "object",
+  "required": ["id", "name", "description", "command"],
+  "properties": {
+    "id": { "type": "string" },
+    "name": { "type": "string" },
+    "description": { "type": "string" },
+    "command": {
+      "type": "array",
+      "items": { "type": "string" }
+    },
+    "stdin": {
+      "type": ["string", "null"]
+    }
+  },
+  "additionalProperties": true
+}

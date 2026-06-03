@@ -1,0 +1,7 @@
+[project]
+name = "skill-script-preservation-fixture"
+version = "0.1.0"
+requires-python = ">=3.10"
+
+[tool.pytest.ini_options]
+addopts = "-p no:cacheprovider"

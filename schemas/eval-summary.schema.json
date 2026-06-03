@@ -1,0 +1,31 @@
+{
+  "type": "object",
+  "required": [
+    "run_id",
+    "run_dir",
+    "set_id",
+    "profile_id",
+    "status",
+    "status_counts",
+    "weighted_status_counts",
+    "runs"
+  ],
+  "properties": {
+    "run_id": { "type": "string" },
+    "run_dir": { "type": "string" },
+    "set_id": { "type": "string" },
+    "set_name": { "type": "string" },
+    "set_path": { "type": "string" },
+    "profile_id": { "type": "string" },
+    "status": { "type": "string", "enum": ["passed", "failed", "unsafe"] },
+    "status_counts": { "type": "object" },
+    "weighted_status_counts": { "type": "object" },
+    "aggregate_stats": { "type": "object" },
+    "observability": { "type": "object" },
+    "runs": {
+      "type": "array",
+      "items": { "type": "object" }
+    }
+  },
+  "additionalProperties": true
+}

@@ -1,0 +1,20 @@
+{
+  "id": "codex-baseline",
+  "name": "Codex Baseline",
+  "description": "Runs Codex CLI non-interactively through scripts/codex-agent.cmd so repo-local Codex env and CODEX_HOME are used.",
+  "command": [
+    "{suite_root}\\scripts\\codex-agent.cmd",
+    "exec",
+    "--skip-git-repo-check",
+    "-s",
+    "danger-full-access",
+    "-c",
+    "approval_policy=\"never\"",
+    "-c",
+    "model_reasoning_effort=\"none\"",
+    "-C",
+    "{workspace}",
+    "-"
+  ],
+  "stdin": "{prompt}"
+}

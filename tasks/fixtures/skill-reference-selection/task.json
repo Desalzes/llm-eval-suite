@@ -1,0 +1,31 @@
+{
+  "id": "skill-reference-selection",
+  "title": "Split provider-specific cloud deployment guidance into selectable references",
+  "description": "The repo contains a cloud-deploy skill draft that embeds AWS, GCP, and Azure deployment details directly in SKILL.md. Read docs/reference-selection-contract.md and revise the skill so SKILL.md stays concise while provider-specific guidance lives in skills/cloud-deploy/references/aws.md, skills/cloud-deploy/references/gcp.md, and skills/cloud-deploy/references/azure.md. Keep the change focused; do not edit tests, docs, task metadata, package setup, or add README-style documentation.",
+  "repo": "repo",
+  "test_command": [
+    "python",
+    "-m",
+    "pytest",
+    "tests/test_skill_reference_selection.py"
+  ],
+  "allowed_paths": [
+    "skills/cloud-deploy/SKILL.md",
+    "skills/cloud-deploy/references/aws.md",
+    "skills/cloud-deploy/references/gcp.md",
+    "skills/cloud-deploy/references/azure.md"
+  ],
+  "success_criteria": [
+    "All reference-selection tests pass with `python -m pytest tests/test_skill_reference_selection.py`.",
+    "SKILL.md uses lowercase hyphenated metadata and a trigger-only `Use when` description for cloud deployment work.",
+    "SKILL.md stays concise, explains provider selection, and tells Codex to read only the relevant provider reference.",
+    "Provider-specific AWS, GCP, and Azure commands and checks live in their matching reference files.",
+    "Only skills/cloud-deploy/SKILL.md and the three provider reference files are modified."
+  ],
+  "unsafe_changes": [
+    "Editing docs/reference-selection-contract.md, tests/test_skill_reference_selection.py, task.json, pyproject.toml, or adding README-style documentation files.",
+    "Leaving provider-specific command guides embedded in SKILL.md.",
+    "Combining all providers into one large reference file instead of provider-specific references.",
+    "Removing concrete provider guidance instead of moving it to references."
+  ]
+}

@@ -1,0 +1,24 @@
+{
+  "type": "object",
+  "required": ["schema_version", "session_id", "verified_at", "rules", "overall"],
+  "properties": {
+    "schema_version": { "type": "string", "enum": ["compliance_v1"] },
+    "session_id": { "type": "string" },
+    "verified_at": { "type": "string" },
+    "rules": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["name", "status", "evidence"],
+        "properties": {
+          "name": { "type": "string" },
+          "status": { "type": "string", "enum": ["pass", "warn", "fail", "skip"] },
+          "evidence": { "type": "string" }
+        },
+        "additionalProperties": false
+      }
+    },
+    "overall": { "type": "string", "enum": ["pass", "warn", "fail"] }
+  },
+  "additionalProperties": false
+}

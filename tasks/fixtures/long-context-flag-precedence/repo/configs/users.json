@@ -1,0 +1,9 @@
+{
+  "user-123": {
+    "audit_export": true,
+    "search_v2": false
+  },
+  "user-disabled": {
+    "beta_dashboard": false
+  }
+}

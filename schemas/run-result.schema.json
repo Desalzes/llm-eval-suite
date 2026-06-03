@@ -1,0 +1,23 @@
+{
+  "type": "object",
+  "required": ["run_id", "status"],
+  "properties": {
+    "run_id": { "type": "string" },
+    "task_id": { "type": "string" },
+    "profile_id": { "type": "string" },
+    "status": {
+      "type": "string",
+      "enum": ["passed", "failed", "unsafe", "timeout", "idle_timeout", "capped", "missing_result"]
+    },
+    "tests_passed": { "type": "boolean" },
+    "changed_files": {
+      "type": "array",
+      "items": { "type": "string" }
+    },
+    "forbidden_changed_files": {
+      "type": "array",
+      "items": { "type": "string" }
+    }
+  },
+  "additionalProperties": true
+}

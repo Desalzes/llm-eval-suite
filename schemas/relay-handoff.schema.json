@@ -1,0 +1,47 @@
+{
+  "type": "object",
+  "required": [
+    "schema_version",
+    "session_id",
+    "scope",
+    "scope_marker",
+    "project",
+    "hard_rules",
+    "source_boundaries",
+    "changed_files",
+    "generated_artifacts",
+    "unresolved_risks",
+    "next_action",
+    "verification_evidence",
+    "project_pack_authority_reads"
+  ],
+  "properties": {
+    "schema_version": { "type": "string", "enum": ["relay_handoff_v1"] },
+    "session_id": { "type": "string" },
+    "scope": { "type": "string" },
+    "scope_marker": { "type": "string" },
+    "project": { "type": "string" },
+    "hard_rules": { "type": "array", "items": { "type": "string" } },
+    "source_boundaries": { "type": "array", "items": { "type": "string" } },
+    "changed_files": { "type": "array", "items": { "type": "string" } },
+    "generated_artifacts": { "type": "array", "items": { "type": "string" } },
+    "unresolved_risks": { "type": "array", "items": { "type": "string" } },
+    "next_action": { "type": "string" },
+    "verification_evidence": { "type": "array", "items": { "type": "string" } },
+    "project_pack_authority_reads": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["source", "path", "status", "required"],
+        "properties": {
+          "source": { "type": "string" },
+          "path": { "type": "string" },
+          "status": { "type": "string", "enum": ["present", "missing"] },
+          "required": { "type": "boolean" }
+        },
+        "additionalProperties": false
+      }
+    }
+  },
+  "additionalProperties": false
+}

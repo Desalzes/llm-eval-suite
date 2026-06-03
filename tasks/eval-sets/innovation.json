@@ -1,0 +1,17 @@
+{
+  "id": "innovation",
+  "name": "Innovation Supervised Eval Set",
+  "description": "Small eval set for branch-first invention behavior with deterministic scoring.",
+  "tasks": [
+    {
+      "path": "tasks/fixtures/innovation-mixed-representation-search/task.json",
+      "weight": 2,
+      "tags": ["innovation", "invention", "representation-shift", "construction-search", "mixed"]
+    },
+    {
+      "path": "tasks/fixtures/innovation-construction-counterexample/task.json",
+      "weight": 2,
+      "tags": ["innovation", "invention", "counterexample", "construction-search", "mixed"]
+    }
+  ]
+}

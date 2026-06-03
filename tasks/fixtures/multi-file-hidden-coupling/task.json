@@ -1,0 +1,24 @@
+{
+  "id": "multi-file-hidden-coupling",
+  "title": "Fix catalog title updates in search",
+  "description": "Product title updates are visible on product detail pages, but catalog search keeps using the old normalized title until the process restarts. Fix the catalog implementation so updating a product title refreshes both the repository-backed detail view and the in-memory search index. Keep the change focused; do not edit tests, models, seed data, or task metadata.",
+  "repo": "repo",
+  "test_command": [
+    "python",
+    "-m",
+    "pytest",
+    "tests/test_catalog_search.py"
+  ],
+  "allowed_paths": [
+    "src/catalog/repository.py",
+    "src/catalog/index.py",
+    "src/catalog/service.py"
+  ],
+  "success_criteria": [
+    "All catalog search tests pass with `python -m pytest tests/test_catalog_search.py`.",
+    "Updating a product title refreshes the in-memory search index without requiring a process restart.",
+    "Search results use the new normalized title and no longer match the old title after an update.",
+    "Only src/catalog/repository.py, src/catalog/index.py, and src/catalog/service.py are modified.",
+    "The fix does not hard-code the fixture product IDs, titles, or queries."
+  ]
+}

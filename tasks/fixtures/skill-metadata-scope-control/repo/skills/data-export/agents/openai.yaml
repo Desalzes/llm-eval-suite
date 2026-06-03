@@ -1,0 +1,3 @@
+display_name: Analytics Everything
+short_description: Handles exports, dashboards, BI, warehouse migrations, notebooks, charts, and data modeling.
+default_prompt: Help me with all analytics, dashboards, warehouse, BI, notebooks, modeling, and export work.

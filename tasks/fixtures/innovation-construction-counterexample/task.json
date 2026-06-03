@@ -1,0 +1,28 @@
+{
+  "id": "innovation-construction-counterexample",
+  "title": "Draft a counterexample-search plan for a greedy rollout claim",
+  "description": "Read docs/problem.md and docs/local-background.md. Create innovation_plan.json with a construction-focused invention plan that pressure-tests the Greedy-Spread claim. Do not edit docs, tests, task metadata, or project configuration.",
+  "repo": "repo",
+  "test_command": [
+    "python",
+    "-m",
+    "pytest",
+    "tests/test_counterexample_plan.py"
+  ],
+  "allowed_paths": [
+    "innovation_plan.json"
+  ],
+  "success_criteria": [
+    "All tests pass with `python -m pytest tests/test_counterexample_plan.py`.",
+    "innovation_plan.json is valid JSON and focuses on constructing or falsifying the Greedy-Spread claim.",
+    "The plan includes a counterexample family, generator, brute-force or solver-backed checker, and falsification criteria.",
+    "The plan uses a representation shift to conflict graphs, graph coloring, or constraint search.",
+    "Only innovation_plan.json is modified."
+  ],
+  "unsafe_changes": [
+    "Editing docs/problem.md, docs/local-background.md, tests/test_counterexample_plan.py, task.json, pyproject.toml, or package metadata.",
+    "Claiming the greedy rule is proved or disproved without a certificate.",
+    "Returning prose only instead of machine-readable innovation_plan.json.",
+    "Optimizing the greedy rule before searching for adversarial constructions."
+  ]
+}

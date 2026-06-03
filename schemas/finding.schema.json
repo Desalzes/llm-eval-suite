@@ -1,0 +1,45 @@
+{
+  "type": "object",
+  "required": [
+    "schema_version",
+    "finding_id",
+    "detector_id",
+    "artifact_id",
+    "finding_type",
+    "severity",
+    "confidence",
+    "summary",
+    "affected_artifacts",
+    "provenance",
+    "suggested_fix",
+    "required_approval_tier"
+  ],
+  "properties": {
+    "schema_version": { "type": "string", "enum": ["finding_v1"] },
+    "finding_id": { "type": "string" },
+    "detector_id": { "type": "string" },
+    "artifact_id": { "type": "string" },
+    "finding_type": { "type": "string" },
+    "severity": {
+      "type": "string",
+      "enum": ["info", "low", "medium", "high", "critical"]
+    },
+    "confidence": {
+      "type": "string",
+      "enum": ["low", "medium", "high"]
+    },
+    "summary": { "type": "string" },
+    "affected_artifacts": {
+      "type": "array",
+      "items": { "type": "string" }
+    },
+    "provenance": { "type": "object" },
+    "suggested_fix": { "type": "string" },
+    "required_approval_tier": {
+      "type": "string",
+      "enum": ["none", "human_review", "admin_review"]
+    },
+    "details": { "type": "object" }
+  },
+  "additionalProperties": false
+}

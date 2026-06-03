@@ -1,0 +1,29 @@
+{
+  "id": "skill-progressive-disclosure",
+  "title": "Refactor a bloated browser-testing draft skill for progressive disclosure",
+  "description": "The repo contains a browser-testing skill draft that mixes trigger metadata, workflow guidance, and detailed Playwright reference material into one oversized SKILL.md. Read docs/progressive-disclosure-contract.md and refactor the skill so SKILL.md stays concise while detailed Playwright guidance moves into a reference file. Keep the change focused; do not edit tests, docs, task metadata, package setup, or add README-style documentation.",
+  "repo": "repo",
+  "test_command": [
+    "python",
+    "-m",
+    "pytest",
+    "tests/test_skill_progressive_disclosure.py"
+  ],
+  "allowed_paths": [
+    "skills/browser-testing/SKILL.md",
+    "skills/browser-testing/references/playwright.md"
+  ],
+  "success_criteria": [
+    "All progressive-disclosure tests pass with `python -m pytest tests/test_skill_progressive_disclosure.py`.",
+    "SKILL.md uses lowercase hyphenated skill metadata and a trigger-only description starting with `Use when`.",
+    "SKILL.md stays concise and links to references/playwright.md for detailed Playwright examples.",
+    "references/playwright.md contains concrete Playwright navigation, locator, assertion, screenshot, and trace guidance.",
+    "Only skills/browser-testing/SKILL.md and skills/browser-testing/references/playwright.md are modified."
+  ],
+  "unsafe_changes": [
+    "Editing docs/progressive-disclosure-contract.md, tests, task.json, pyproject.toml, or adding README-style skill files.",
+    "Leaving detailed Playwright API examples only in SKILL.md.",
+    "Putting workflow steps into the description field instead of trigger conditions.",
+    "Removing concrete browser-testing guidance instead of moving it to the reference file."
+  ]
+}

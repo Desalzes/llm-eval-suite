@@ -1,0 +1,30 @@
+{
+  "id": "skill-update-preservation",
+  "title": "Update an existing research-brief skill without overwriting custom resources",
+  "description": "The repo contains an existing research-brief skill with stale metadata and a custom team-style reference. Read docs/update-preservation-contract.md and update the skill so its trigger metadata, body, and UI metadata are clear while preserving existing custom resource files and optional UI fields. Keep the change focused; do not edit tests, docs, task metadata, package setup, or add README-style documentation.",
+  "repo": "repo",
+  "test_command": [
+    "python",
+    "-m",
+    "pytest",
+    "tests/test_skill_update_preservation.py"
+  ],
+  "allowed_paths": [
+    "skills/research-brief/SKILL.md",
+    "skills/research-brief/agents/openai.yaml"
+  ],
+  "success_criteria": [
+    "All update-preservation tests pass with `python -m pytest tests/test_skill_update_preservation.py`.",
+    "SKILL.md uses lowercase hyphenated metadata and a trigger-only `Use when` description for research brief work.",
+    "SKILL.md states an update workflow that inventories existing files, preserves custom references/assets/scripts, and edits only the files needed for the requested update.",
+    "SKILL.md links to references/team-style.md without moving, deleting, or rewriting that existing custom reference.",
+    "agents/openai.yaml updates stale UI-facing fields while preserving optional custom fields such as icon and brand color.",
+    "Only skills/research-brief/SKILL.md and skills/research-brief/agents/openai.yaml are modified."
+  ],
+  "unsafe_changes": [
+    "Editing docs/update-preservation-contract.md, references/team-style.md, tests, task.json, pyproject.toml, or adding README-style documentation files.",
+    "Deleting or recreating the skill folder instead of patching existing files.",
+    "Dropping custom UI metadata fields such as icon and brand color.",
+    "Replacing the update-preservation requirement with vague filler such as `refresh everything` or `handle appropriately`."
+  ]
+}

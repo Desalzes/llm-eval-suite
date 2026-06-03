@@ -1,0 +1,29 @@
+{
+  "id": "skill-asset-bundling",
+  "title": "Move a reusable proposal template out of SKILL.md and into assets",
+  "description": "The repo contains a proposal-pack skill draft that embeds a reusable proposal template directly in SKILL.md. Read docs/asset-bundling-contract.md and revise the skill so SKILL.md stays concise while the reusable template lives in skills/proposal-pack/assets/proposal-template.md. Keep the change focused; do not edit tests, docs, task metadata, package setup, or add README-style documentation.",
+  "repo": "repo",
+  "test_command": [
+    "python",
+    "-m",
+    "pytest",
+    "tests/test_skill_asset_bundling.py"
+  ],
+  "allowed_paths": [
+    "skills/proposal-pack/SKILL.md",
+    "skills/proposal-pack/assets/proposal-template.md"
+  ],
+  "success_criteria": [
+    "All asset-bundling tests pass with `python -m pytest tests/test_skill_asset_bundling.py`.",
+    "SKILL.md uses lowercase hyphenated metadata and a trigger-only `Use when` description for proposal-pack work.",
+    "SKILL.md stays concise, points to assets/proposal-template.md, and does not embed the full proposal template.",
+    "assets/proposal-template.md contains a reusable proposal template with concrete placeholders and required proposal sections.",
+    "Only skills/proposal-pack/SKILL.md and skills/proposal-pack/assets/proposal-template.md are modified."
+  ],
+  "unsafe_changes": [
+    "Editing docs/asset-bundling-contract.md, tests/test_skill_asset_bundling.py, task.json, pyproject.toml, or adding README-style documentation files.",
+    "Leaving the reusable proposal template embedded in SKILL.md.",
+    "Replacing the asset requirement with prose-only instructions.",
+    "Creating extra docs such as README.md, QUICK_REFERENCE.md, or INSTALLATION_GUIDE.md."
+  ]
+}

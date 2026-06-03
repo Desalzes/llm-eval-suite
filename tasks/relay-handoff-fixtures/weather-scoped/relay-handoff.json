@@ -1,0 +1,54 @@
+{
+  "schema_version": "relay_handoff_v1",
+  "session_id": "ms-weather-local-smoke",
+  "scope": "WEATHER",
+  "scope_marker": "MASTER: WEATHER",
+  "project": "Weather Betting Markets",
+  "hard_rules": [
+    "Start user-visible responses with MASTER: WEATHER.",
+    "Keep .claude read-only unless explicitly scoped.",
+    "Treat project-pack source as read-only unless an implementation session is opened."
+  ],
+  "source_boundaries": [
+    "Root suite source is C:/Users/desal/ChatGPT.",
+    "Weather project pack descriptor is local/project-packs/weather/project.json.",
+    "Weather source path is C:/Users/desal/Desktop/Projects/_Betting_Markets/Weather."
+  ],
+  "changed_files": [
+    "suite/master_session.py",
+    "suite/relay_handoff.py",
+    "schemas/orientation.schema.json",
+    "schemas/relay-handoff.schema.json",
+    "tests/test_master_session.py",
+    "tests/test_relay_handoff.py"
+  ],
+  "generated_artifacts": [
+    "runs/master-sessions/ms-weather-local-smoke/orientation.json",
+    "runs/master-sessions/ms-weather-local-smoke/handoff.json",
+    "runs/master-sessions/ms-weather-local-smoke/compliance.json"
+  ],
+  "unresolved_risks": [
+    "Project-pack docs/session-handoff.md is optional and may be absent.",
+    "Relay scoring is deterministic local scoring only; no model-call preservation benchmark exists yet."
+  ],
+  "next_action": "Add a CLI command or runner that renders relay handoff fixtures into every supported format and writes score artifacts.",
+  "verification_evidence": [
+    "python -m unittest discover -s tests -> 182 passed",
+    "git diff --check -> exit 0 with existing CRLF warnings only",
+    "score_relay_handoff_text(format_toon(handoff), expected=handoff) -> pass 17/17"
+  ],
+  "project_pack_authority_reads": [
+    {
+      "source": "project_pack",
+      "path": "AGENTS.md",
+      "status": "present",
+      "required": true
+    },
+    {
+      "source": "project_pack",
+      "path": "docs/session-handoff.md",
+      "status": "missing",
+      "required": false
+    }
+  ]
+}
