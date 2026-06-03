@@ -229,6 +229,66 @@ def cmd_score_set(args) -> int:
     return 0
 
 
+def lightweight_validate(obj: dict, schema: dict) -> list:
+    """Return error strings (empty == ok). Not a full JSON-Schema engine — stdlib only."""
+    errors = []
+    for key in schema.get("required", []):
+        if key not in obj:
+            errors.append(f"missing required field: {key}")
+    type_map = {"string": str, "array": list, "object": dict, "integer": int, "boolean": bool}
+    for key, spec in schema.get("properties", {}).items():
+        if key in obj and "type" in spec:
+            py = type_map.get(spec["type"])
+            if py and not isinstance(obj[key], py):
+                errors.append(f"field {key} should be {spec['type']}")
+    return errors
+
+
+REQUIRED_TASK_FIELDS = ("id", "title", "description", "repo", "test_command",
+                        "allowed_paths", "success_criteria")
+
+
+def cmd_validate(args) -> int:
+    task_path = Path(args.task).resolve()
+    try:
+        task = load_json(task_path)
+    except (OSError, json.JSONDecodeError) as exc:
+        print(f"INVALID: cannot read task.json: {exc}")
+        return 1
+    reasons = []
+    schema_path = Path("schemas/task.schema.json")
+    if schema_path.exists():
+        reasons += lightweight_validate(task, load_json(schema_path))
+    else:
+        reasons += [f"missing required field: {k}" for k in REQUIRED_TASK_FIELDS if k not in task]
+    if not reasons:
+        repo = resolve_repo_dir(task_path, task)
+        if not repo.is_dir():
+            reasons.append(f"repo dir not found: {repo}")
+        if not task.get("allowed_paths"):
+            reasons.append("allowed_paths must be non-empty")
+        if not task.get("test_command"):
+            reasons.append("test_command must be non-empty")
+        if not reasons:
+            tmp = Path(tempfile.mkdtemp(prefix="lluv-validate-"))
+            try:
+                ws = tmp / "workspace"
+                shutil.copytree(repo, ws, ignore=shutil.ignore_patterns(*IGNORED_NAMES))
+                exit_code, _ = run_test_command(task["test_command"], ws)
+                if exit_code == 0:
+                    reasons.append("unmodified repo already PASSES its tests - "
+                                   "no real challenge (tests must fail before a fix)")
+            finally:
+                shutil.rmtree(tmp, ignore_errors=True)
+    if reasons:
+        print("INVALID:")
+        for r in reasons:
+            print(f"  - {r}")
+        return 1
+    print(f"VALID: {task['id']} - abides by the template")
+    return 0
+
+
 def build_parser() -> argparse.ArgumentParser:
     p = argparse.ArgumentParser(prog="run.py", description="llm-eval-suite reference scorer (scorer-only)")
     sub = p.add_subparsers(dest="cmd", required=True)
@@ -246,6 +306,10 @@ def build_parser() -> argparse.ArgumentParser:
     st.add_argument("eval_set")
     st.add_argument("--runs-dir", default="runs")
     st.set_defaults(func=cmd_score_set)
+
+    sv = sub.add_parser("validate", help="check a candidate task abides by the template")
+    sv.add_argument("task")
+    sv.set_defaults(func=cmd_validate)
 
     return p
 

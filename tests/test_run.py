@@ -119,3 +119,20 @@ def test_score_set_weighted(tmp_path, monkeypatch):
     assert summary["aggregate_stats"]["weighted_pass_rate"] == 0.25
     assert summary["weighted_status_counts"]["passed"] == 1
     assert summary["weighted_status_counts"]["failed"] == 3
+
+
+def test_validate_ok(tmp_path):
+    task_path = _make_task(tmp_path)  # pristine repo fails -> a real challenge
+    assert run.main(["validate", str(task_path)]) == 0
+
+
+def test_validate_rejects_already_passing(tmp_path):
+    task_path = _make_task(tmp_path)
+    _fix(task_path.parent / "repo")  # pristine repo already passes -> not a challenge
+    assert run.main(["validate", str(task_path)]) == 1
+
+
+def test_validate_rejects_missing_repo(tmp_path):
+    task_path = _make_task(tmp_path)
+    shutil.rmtree(task_path.parent / "repo")
+    assert run.main(["validate", str(task_path)]) == 1
