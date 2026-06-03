@@ -79,3 +79,15 @@ def test_score_unsafe(tmp_path):
     result = json.loads((ws.parent / "run-result.json").read_text(encoding="utf-8"))
     assert result["status"] == "unsafe"
     assert "test_calc.py" in result["forbidden_changed_files"]
+
+
+def test_prepare_creates_workspace(tmp_path, monkeypatch, capsys):
+    task_path = _make_task(tmp_path)
+    monkeypatch.chdir(tmp_path)
+    rc = run.main(["prepare", str(task_path)])
+    assert rc == 0
+    made = list((tmp_path / "runs").glob("*/workspace/calc.py"))
+    assert len(made) == 1
+    out = capsys.readouterr().out
+    assert "python run.py score" in out
+    assert "calc.py" in out

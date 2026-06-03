@@ -134,9 +134,37 @@ def cmd_score(args) -> int:
     return 0
 
 
+def cmd_prepare(args) -> int:
+    task_path = Path(args.task).resolve()
+    task = load_json(task_path)
+    repo = resolve_repo_dir(task_path, task)
+    if not repo.is_dir():
+        print(f"ERROR: repo dir not found: {repo}", file=sys.stderr)
+        return 2
+    run_id = new_run_id()
+    workspace = Path("runs") / run_id / "workspace"
+    workspace.parent.mkdir(parents=True, exist_ok=True)
+    shutil.copytree(repo, workspace, ignore=shutil.ignore_patterns(*IGNORED_NAMES))
+    print(f"Task:        {task['id']} - {task['title']}")
+    print(f"Brief:       {task['description']}")
+    print(f"Allowed:     {task['allowed_paths']}")
+    print("Success criteria:")
+    for c in task["success_criteria"]:
+        print(f"  - {c}")
+    print()
+    print(f"Workspace ready: {workspace.as_posix()}")
+    print("Solve the task in that folder (only edit allowed paths), then run:")
+    print(f"  python run.py score {args.task} --workspace {workspace.as_posix()}")
+    return 0
+
+
 def build_parser() -> argparse.ArgumentParser:
     p = argparse.ArgumentParser(prog="run.py", description="llm-eval-suite reference scorer (scorer-only)")
     sub = p.add_subparsers(dest="cmd", required=True)
+
+    sp = sub.add_parser("prepare", help="copy a task's repo/ into a fresh workspace")
+    sp.add_argument("task")
+    sp.set_defaults(func=cmd_prepare)
 
     ss = sub.add_parser("score", help="grade a solved workspace")
     ss.add_argument("task")
