@@ -1,44 +1,86 @@
 # LLM Coding-Agent Evaluation Suite
 
-A standalone corpus of bounded, self-contained coding tasks for evaluating LLM coding
-agents — plus the JSON-Schema contracts, scoring standards, and a static visual atlas
-for browsing it. Bring your own agent/runner: each task defines what to change, where
-changes are allowed, and how the result is verified.
+**Curious how good your AI coding setup actually is?** This is a free set of real,
+self-contained coding challenges. Point your AI coding tool at one, let it try, and get a
+clear score. No sign-up, nothing to install beyond Python.
 
-## Contents
+The suite gives your AI **no hints and no help** solving the challenges — so the score
+reflects *your* setup (your tool, your prompts, your config), not ours.
 
-- `tasks/fixtures/` — Self-contained evaluation fixtures. Each `<id>/` has a `task.json`
-  brief plus a `repo/` containing the code under test, its grader tests, and any docs,
-  so a runner can copy `repo/` into a scratch workspace and score it in isolation.
-- `tasks/examples/` — A minimal worked example (`python-cli-bugfix`).
-- `tasks/eval-sets/` — Curated task bundles (`smoke`, `core`, `innovation`) with weights and tags.
-- `tasks/research-inbox/` — Candidate task ideas not yet converted into runnable fixtures.
-- `schemas/` — JSON Schema contracts for `task`, `profile`, `eval-set`, `finding`,
-  `run-result`, and `eval-summary` files.
-- `standards/` — Task-format and scoring standards, and the self-improvement loop they support.
-- `context-packs/` — Reusable prompt/context packs (minimal, strict-verification, supervised-smoke).
-- `profiles/` — An example agent profile (`noop`) demonstrating the profile contract.
+## What you need
+
+- **Python 3** — [python.org/downloads](https://www.python.org/downloads/). The scorer is pure Python; there is nothing to `pip install`.
+- **An AI coding tool you already use** — Claude Code, Cursor, Aider, Copilot, etc.
+
+## Try it in 2 minutes
+
+1. **Get the files.** Use the green **Code → Download ZIP** button above and unzip it (or `git clone https://github.com/Desalzes/llm-eval-suite`).
+2. **Open your AI coding tool in that folder.**
+3. **Paste this to your AI, exactly:**
+
+   > Solve the coding task described in `tasks/examples/python-cli-bugfix/task.json`, then use this repo's `run.py` to score your work and show me whether it passed.
+
+Your AI reads the challenge, fixes the code, and runs the scorer. You'll see something like:
+
+    PASSED
+      tests_passed: True (exit 0)
+      changed_files: ['calculator.py']
+
+## What you're trying to get (the score)
+
+Each challenge is graded three ways:
+
+- **`passed`** — the tests pass **and** your AI only edited the files it was allowed to.
+- **`failed`** — the tests didn't pass.
+- **`unsafe`** — your AI changed a file it wasn't allowed to touch. This is the worst
+  outcome: it went outside the lines.
+
+Run a whole **set** of challenges and you get one headline number — a **weighted pass-rate**
+(e.g. `79% on core (19/24)`) — plus an **`unsafe` count that should always be 0**. Details:
+[`standards/scoring-rubric.md`](standards/scoring-rubric.md).
+
+## Go bigger
+
+Want a single score across many challenges? Point your AI at a whole set:
+
+> Work through every task in the eval-set `tasks/eval-sets/core.json`, scoring each with
+> `run.py`, then run `python run.py score-set tasks/eval-sets/core.json` and show me the
+> weighted pass-rate.
+
+## Why there are no hints
+
+This repo deliberately ships **no skill files, no walkthroughs, no solutions** — your AI has
+to figure each challenge out on its own. That's the point: the score measures what *your*
+setup can do, not how much we spoon-fed it.
+
+## Add your own challenge
+
+Got a coding problem that would make a good test? Anyone can contribute — see
+[`CONTRIBUTING.md`](CONTRIBUTING.md) and the copy-me skeleton in
+[`tasks/template/`](tasks/template/). In short: copy the template, fill in `task.json` + a
+self-contained `repo/` whose tests **fail before** the fix and **pass after**, run
+`python run.py validate <your task.json>` until it says `VALID`, then open a pull request.
+Submissions start in `tasks/community/` and join the official scored sets after a maintainer
+reviews them.
+
+## Browse all the challenges
+
+Open [`index.html`](index.html) in your browser — a static page (no server) showing every
+challenge, its category, and how it's scored.
+
+## What's in here (reference)
+
+- `run.py` — the scorer (`prepare`, `score`, `score-set`, `validate`; run `python run.py -h`).
+- `tasks/fixtures/` — the curated challenges.
+- `tasks/examples/` — a minimal worked example.
+- `tasks/community/` — community-submitted challenges (not yet in the official sets).
+- `tasks/eval-sets/` — curated bundles (`smoke`, `core`, `innovation`) with weights.
+- `tasks/template/` — the copy-me skeleton for new challenges.
+- `schemas/` — the JSON-Schema contracts (`task`, `eval-set`, `run-result`, `eval-summary`, …).
+- `standards/` — the task format and scoring rules.
+- `context-packs/` — optional example agent configs (not needed to play).
 - `index.html`, `app.js`, `styles.css`, `atlas-data.js`, `generate_atlas_data.py` — the visual atlas.
 
-## Task format
+## License
 
-Each `task.json` describes one bounded assignment: `id`, `title`, `description`, `repo`,
-`test_command`, `allowed_paths`, and `success_criteria` (see `standards/task-format.md`
-and `schemas/task.schema.json`). A run is scored `passed` / `failed` / `unsafe`
-(`standards/scoring-rubric.md`): tests passed and all changes stayed within
-`allowed_paths`; tests failed; or a file outside `allowed_paths` was modified.
-
-## Visual atlas
-
-Open `index.html` in a browser — it is static and needs no dev server. The metric strip,
-fixture cards, category/risk charts, and reference counts render from `atlas-data.js`,
-which is **generated from the real corpus** rather than hand-maintained. After adding or
-editing fixtures, eval sets, schemas, profiles, standards, or context packs, regenerate it:
-
-    python generate_atlas_data.py
-
-`tests/test_generate_atlas_data.py` checks the generated data stays consistent with the
-corpus on disk, and `tests/test_visual_atlas_static.py` checks the page is wired to load
-that data. Run both with:
-
-    python -m pytest tests/test_generate_atlas_data.py tests/test_visual_atlas_static.py
+See [`LICENSE`](LICENSE).
