@@ -164,3 +164,19 @@ def test_score_set_emits_leaderboard_entry(tmp_path, monkeypatch):
     assert entry["tokens_in"] == 1000 and entry["tokens_out"] == 500
     assert entry["metrics_self_reported"] is True
     assert entry["aggregate_stats"]["weighted_pass_rate"] == 1.0
+
+
+def test_score_ignores_test_scratch_dirs(tmp_path):
+    # A fixture's grader can write scratch (e.g. .pytest-tmp/) during the test run.
+    # That is NOT an agent edit and must not be flagged as unsafe.
+    task_path = _make_task(tmp_path)
+    ws = _copy_ws(task_path, tmp_path / "runs" / "r1" / "workspace")
+    _fix(ws)  # correct fix -> tests pass
+    scratch = ws / ".pytest-tmp" / "sub"
+    scratch.mkdir(parents=True)
+    (scratch / "messy.csv").write_text("x", encoding="utf-8")
+    run.main(["score", str(task_path), "--workspace", str(ws)])
+    result = json.loads((ws.parent / "run-result.json").read_text(encoding="utf-8"))
+    assert result["status"] == "passed"
+    assert all(".pytest-tmp" not in f for f in result["changed_files"])
+    assert result["forbidden_changed_files"] == []

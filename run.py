@@ -24,7 +24,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 
 IGNORED_NAMES = {
-    ".git", "__pycache__", ".pytest_cache", ".mypy_cache", ".ruff_cache",
+    ".git", "__pycache__", ".pytest_cache", ".pytest-tmp", ".mypy_cache", ".ruff_cache",
     "node_modules", ".venv", "venv", "dist", "build", ".DS_Store",
 }
 TEST_TIMEOUT_SECONDS = 600
