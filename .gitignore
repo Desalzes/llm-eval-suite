@@ -15,14 +15,7 @@ node_modules/
 
 # Generated run output
 runs/
-agent-runs/
-eval-runs/
-fixture-runs/
-improvement-runs/
-polymarket-runs/
-research-runs/
-supervised-runs/
-terminal-runs/
+*-runs/
 output/
 tmp/
 

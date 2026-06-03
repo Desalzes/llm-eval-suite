@@ -2,8 +2,6 @@
 
 These notes are pre-suite task candidates. They are intentionally richer than the current `task.json` schema so they can be reviewed before being converted into runnable fixtures.
 
-Research-backed roadmap: [Self-Improvement Fixture Roadmap](../../docs/benchmark-fixture-roadmap.md)
-
 Current suite mapping:
 
 - `Task goal` maps into `title` and `description`.
