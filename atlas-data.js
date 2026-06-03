@@ -3,7 +3,7 @@
 window.ATLAS_DATA = {
   "summary": {
     "fixtureCount": 28,
-    "testFileCount": 2,
+    "testFileCount": 4,
     "evalSetCount": 3,
     "schemaCount": 6,
     "profileCount": 1,
