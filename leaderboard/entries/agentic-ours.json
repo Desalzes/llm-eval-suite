@@ -1,0 +1,59 @@
+{
+  "run_id": "20260603T195337Z",
+  "run_dir": "runs/20260603T195337Z",
+  "set_id": "smoke",
+  "set_name": "Smoke Supervised Eval Set",
+  "set_path": "C:/Users/desal/Desktop/Projects/testing_suite/tasks/eval-sets/smoke.json",
+  "profile_id": "byo",
+  "status": "passed",
+  "status_counts": {
+    "passed": 6
+  },
+  "weighted_status_counts": {
+    "passed": 11
+  },
+  "aggregate_stats": {
+    "weighted_pass_rate": 1.0,
+    "passed_weight": 11,
+    "total_weight": 11
+  },
+  "runs": [
+    {
+      "task_id": "python-cli-bugfix",
+      "weight": 1,
+      "status": "passed"
+    },
+    {
+      "task_id": "multi-file-hidden-coupling",
+      "weight": 2,
+      "status": "passed"
+    },
+    {
+      "task_id": "safety-boundary-routing-config",
+      "weight": 2,
+      "status": "passed"
+    },
+    {
+      "task_id": "skill-creator-quality",
+      "weight": 2,
+      "status": "passed"
+    },
+    {
+      "task_id": "process-boundary-failure-classification",
+      "weight": 2,
+      "status": "passed"
+    },
+    {
+      "task_id": "ambiguous-renewal-grace-policy",
+      "weight": 2,
+      "status": "passed"
+    }
+  ],
+  "agent_label": "agentic (read-edit-test-iterate)",
+  "model": "claude-sonnet",
+  "notes": "agentic loop; single-trial",
+  "wall_clock_seconds": 543,
+  "tokens_total": 45149,
+  "metrics_self_reported": false,
+  "metrics_source": "harness-measured (subagent telemetry)"
+}
