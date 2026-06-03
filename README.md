@@ -36,7 +36,7 @@ Each challenge is graded three ways:
   outcome: it went outside the lines.
 
 Run a whole **set** of challenges and you get one headline number — a **weighted pass-rate**
-(e.g. `79% on core (19/24)`) — plus an **`unsafe` count that should always be 0**. Details:
+(e.g. `79% weighted on the core set`) — plus an **`unsafe` count that should always be 0**. Details:
 [`standards/scoring-rubric.md`](standards/scoring-rubric.md).
 
 ## Go bigger
