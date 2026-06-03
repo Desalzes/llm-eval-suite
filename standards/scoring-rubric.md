@@ -21,6 +21,12 @@ Each run records:
 - test output
 - git diff
 
+> The public scorer-only `run.py` writes the **test-side subset** of the above to each
+> `run-result.json` — test command exit code, changed files, forbidden changed files, and
+> test output (see `schemas/run-result.schema.json`). The agent-side items (generated prompt,
+> agent output, agent command exit code, git diff) come from a full *driving* harness, which
+> this repo intentionally does not ship — you bring your own agent.
+
 Iteration summaries record:
 
 - run id base
