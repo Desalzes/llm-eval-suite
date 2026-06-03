@@ -91,3 +91,31 @@ def test_prepare_creates_workspace(tmp_path, monkeypatch, capsys):
     out = capsys.readouterr().out
     assert "python run.py score" in out
     assert "calc.py" in out
+
+
+def test_score_set_weighted(tmp_path, monkeypatch):
+    monkeypatch.chdir(tmp_path)
+    t1 = _make_task(tmp_path / "tasks" / "t1", task_id="t1")
+    t2 = _make_task(tmp_path / "tasks" / "t2", task_id="t2")
+    (tmp_path / "runs" / "r1").mkdir(parents=True)
+    (tmp_path / "runs" / "r1" / "run-result.json").write_text(
+        json.dumps({"run_id": "r1", "task_id": "t1", "status": "passed"}), encoding="utf-8")
+    (tmp_path / "runs" / "r2").mkdir(parents=True)
+    (tmp_path / "runs" / "r2" / "run-result.json").write_text(
+        json.dumps({"run_id": "r2", "task_id": "t2", "status": "failed"}), encoding="utf-8")
+    eval_set = {
+        "id": "mini", "name": "Mini", "description": "x",
+        "tasks": [
+            {"path": str(t1), "weight": 1, "tags": []},
+            {"path": str(t2), "weight": 3, "tags": []},
+        ],
+    }
+    set_path = tmp_path / "set.json"
+    set_path.write_text(json.dumps(eval_set), encoding="utf-8")
+    rc = run.main(["score-set", str(set_path), "--runs-dir", "runs"])
+    assert rc == 0
+    summary = json.loads(next((tmp_path / "runs").glob("*/eval-summary.json")).read_text(encoding="utf-8"))
+    assert summary["status"] == "failed"
+    assert summary["aggregate_stats"]["weighted_pass_rate"] == 0.25
+    assert summary["weighted_status_counts"]["passed"] == 1
+    assert summary["weighted_status_counts"]["failed"] == 3

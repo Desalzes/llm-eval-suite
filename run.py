@@ -158,6 +158,77 @@ def cmd_prepare(args) -> int:
     return 0
 
 
+def _latest_result_for(task_id: str, runs_dir: Path):
+    best = None
+    for rr in Path(runs_dir).glob("*/run-result.json"):
+        try:
+            data = load_json(rr)
+        except (OSError, json.JSONDecodeError):
+            continue
+        if data.get("task_id") == task_id:
+            mtime = rr.stat().st_mtime
+            if best is None or mtime > best[0]:
+                best = (mtime, data)
+    return best[1] if best else None
+
+
+def cmd_score_set(args) -> int:
+    set_path = Path(args.eval_set).resolve()
+    eval_set = load_json(set_path)
+    runs_dir = Path(args.runs_dir)
+    status_counts, weighted_counts, runs = {}, {}, []
+    total_weight = passed_weight = 0
+    for entry in eval_set["tasks"]:
+        weight = int(entry.get("weight", 1))
+        total_weight += weight
+        raw = Path(entry["path"])
+        candidates = [raw, Path.cwd() / raw, set_path.parent / raw]
+        task_file = next((c for c in candidates if c.exists()), raw)
+        task_id = load_json(task_file)["id"] if task_file.exists() else entry["path"]
+        result = _latest_result_for(task_id, runs_dir)
+        status = result["status"] if result else "missing_result"
+        status_counts[status] = status_counts.get(status, 0) + 1
+        weighted_counts[status] = weighted_counts.get(status, 0) + weight
+        if status == "passed":
+            passed_weight += weight
+        runs.append({"task_id": task_id, "weight": weight, "status": status})
+    if any(r["status"] == "unsafe" for r in runs):
+        overall = "unsafe"
+    elif runs and all(r["status"] == "passed" for r in runs):
+        overall = "passed"
+    else:
+        overall = "failed"
+    weighted_pass_rate = round(passed_weight / total_weight, 4) if total_weight else 0.0
+    run_id = new_run_id()
+    run_dir = runs_dir / run_id
+    run_dir.mkdir(parents=True, exist_ok=True)
+    summary = {
+        "run_id": run_id,
+        "run_dir": run_dir.as_posix(),
+        "set_id": eval_set["id"],
+        "set_name": eval_set.get("name", eval_set["id"]),
+        "set_path": set_path.as_posix(),
+        "profile_id": "byo",
+        "status": overall,
+        "status_counts": status_counts,
+        "weighted_status_counts": weighted_counts,
+        "aggregate_stats": {
+            "weighted_pass_rate": weighted_pass_rate,
+            "passed_weight": passed_weight,
+            "total_weight": total_weight,
+        },
+        "runs": runs,
+    }
+    (run_dir / "eval-summary.json").write_text(json.dumps(summary, indent=2), encoding="utf-8")
+    unsafe_n = status_counts.get("unsafe", 0)
+    mark = "OK" if unsafe_n == 0 else "FAIL"
+    print(f"{eval_set['id']}: {round(weighted_pass_rate * 100, 1)}% weighted pass "
+          f"({passed_weight}/{total_weight}) - unsafe {unsafe_n} [{mark}]")
+    print(f"  status_counts: {status_counts}")
+    print(f"  wrote {(run_dir / 'eval-summary.json').as_posix()}")
+    return 0
+
+
 def build_parser() -> argparse.ArgumentParser:
     p = argparse.ArgumentParser(prog="run.py", description="llm-eval-suite reference scorer (scorer-only)")
     sub = p.add_subparsers(dest="cmd", required=True)
@@ -170,6 +241,11 @@ def build_parser() -> argparse.ArgumentParser:
     ss.add_argument("task")
     ss.add_argument("--workspace", required=True)
     ss.set_defaults(func=cmd_score)
+
+    st = sub.add_parser("score-set", help="aggregate per-task results into an eval-summary")
+    st.add_argument("eval_set")
+    st.add_argument("--runs-dir", default="runs")
+    st.set_defaults(func=cmd_score_set)
 
     return p
 
