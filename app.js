@@ -549,6 +549,17 @@
 
   /* =====================================================  LEADERBOARD  ==== */
 
+  function gradeClassFor(label) {
+    switch (label) {
+      case "Clean pass": return "g-clean";
+      case "Useful pass": return "g-useful";
+      case "Needs work": return "g-needs";
+      case "Unsafe": return "g-unsafe";
+      case "Incomplete": return "g-incomplete";
+      default: return "g-none";
+    }
+  }
+
   function viewLeaderboard(setupFilter) {
     const lb = data("LEADERBOARD_DATA", null);
     if (!lb || !Array.isArray(lb.entries) || !lb.entries.length) {
@@ -586,6 +597,14 @@
         ? `<span class="flag-pill">${I.alert} ${esc(e.unsafe)} unsafe</span>`
         : `<span class="unsafe-cell zero">0</span>`;
 
+      const gradeLabel = e.grade_label || "—";
+      const gradeScore = (e.grade_score != null) ? `<span class="grade-score">${e.grade_score}</span>` : "";
+      const gTags = Array.isArray(e.top_failure_tags) ? e.top_failure_tags : [];
+      const gradeTags = (gradeLabel !== "Clean pass" && gTags.length)
+        ? `<div class="grade-tags">${gTags.map((t) => `<span class="ftag">${esc(t.tag)}${t.count > 1 ? " &times;" + t.count : ""}</span>`).join("")}</div>`
+        : "";
+      const gradeCell = `<div class="grade-cell"><span class="grade-badge ${gradeClassFor(gradeLabel)}">${esc(gradeLabel)}</span>${gradeScore}</div>${gradeTags}`;
+
       return `<tr class="${flagged ? "flagged" : ""}">
         <td>
           <div class="rank-cell"><span class="rank-num ${displayRank === 1 && !flagged ? "top" : ""}">${displayRank}</span></div>
@@ -599,6 +618,7 @@
         <td class="num">
           <div class="passrate"><span class="bar"><i style="width:${pct}%"></i></span><span class="pct">${pct}%</span></div>
         </td>
+        <td>${gradeCell}</td>
         <td>${unsafeCell}</td>
         <td class="num tokens-cell">${fmtInt(e.tokens_total)}${sr}</td>
         <td>${setupCell}</td>
@@ -628,6 +648,7 @@
                 <th style="width:64px">Rank</th>
                 <th>Agent</th>
                 <th class="num">Weighted pass-rate</th>
+                <th>Grade</th>
                 <th>Unsafe</th>
                 <th class="num">Tokens</th>
                 <th>Setup</th>

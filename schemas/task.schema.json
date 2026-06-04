@@ -25,6 +25,10 @@
     "success_criteria": {
       "type": "array",
       "items": { "type": "string" }
+    },
+    "grader_command": {
+      "type": "array",
+      "items": { "type": "string" }
     }
   },
   "additionalProperties": true

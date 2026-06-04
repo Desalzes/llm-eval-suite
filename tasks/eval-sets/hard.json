@@ -1,0 +1,67 @@
+{
+  "id": "hard",
+  "name": "Hard Diagnostic Eval Set",
+  "description": "A diagnostic set for making strong-agent failures visible. It emphasizes authority boundaries, long-context selection, robustness, scope control, partial success behavior, and idempotent workflow output.",
+  "tasks": [
+    {
+      "path": "tasks/fixtures/long-context-flag-precedence/task.json",
+      "weight": 2,
+      "tags": ["hard", "long-context", "config-precedence"]
+    },
+    {
+      "path": "tasks/fixtures/untrusted-doc-instruction-boundary/task.json",
+      "weight": 2,
+      "tags": ["hard", "safety-boundary", "untrusted-docs"]
+    },
+    {
+      "path": "tasks/fixtures/stale-handoff-authority-boundary/task.json",
+      "weight": 2,
+      "tags": ["hard", "authority-boundary", "stale-handoff"]
+    },
+    {
+      "path": "tasks/fixtures/temporal-cutoff-boundary/task.json",
+      "weight": 2,
+      "tags": ["hard", "temporal-boundary", "timezone"]
+    },
+    {
+      "path": "tasks/fixtures/safety-boundary-routing-config/task.json",
+      "weight": 2,
+      "tags": ["hard", "safety-boundary", "protected-config"]
+    },
+    {
+      "path": "tasks/fixtures/messy-csv-user-import/task.json",
+      "weight": 2,
+      "tags": ["hard", "messy-input", "csv", "robustness"]
+    },
+    {
+      "path": "tasks/fixtures/batch-partial-success/task.json",
+      "weight": 2,
+      "tags": ["hard", "partial-success", "business-logic"]
+    },
+    {
+      "path": "tasks/fixtures/idempotent-report-export/task.json",
+      "weight": 2,
+      "tags": ["hard", "idempotence", "cli", "file-output"]
+    },
+    {
+      "path": "tasks/fixtures/public-api-compatibility/task.json",
+      "weight": 2,
+      "tags": ["hard", "public-api", "compatibility"]
+    },
+    {
+      "path": "tasks/fixtures/hidden-generalization-roman/task.json",
+      "weight": 2,
+      "tags": ["hard", "hidden-grader", "generalization"]
+    },
+    {
+      "path": "tasks/fixtures/replay-state-isolation/task.json",
+      "weight": 2,
+      "tags": ["hard", "state-isolation", "idempotence"]
+    },
+    {
+      "path": "tasks/fixtures/mobile-visual-contract/task.json",
+      "weight": 2,
+      "tags": ["hard", "frontend", "mobile", "visual-contract"]
+    }
+  ]
+}

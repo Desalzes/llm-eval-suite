@@ -1,0 +1,15 @@
+{
+  "id": "mobile-visual-contract",
+  "title": "Make the navbar mobile-friendly (CSS)",
+  "description": "The page at index.html has a horizontal navbar styled in styles.css that breaks on small screens: the buttons are too small to tap and the nav does not stack. Update styles.css so that (1) there is a mobile breakpoint at max-width 600px, (2) inside it .nav uses flex-direction: column so the links stack, and (3) the nav buttons have a touch target of at least 44px tall (min-height). Edit only styles.css; do not change index.html or the tests.",
+  "repo": "repo",
+  "test_command": ["python", "-m", "pytest", "tests/test_mobile.py"],
+  "allowed_paths": ["styles.css"],
+  "success_criteria": [
+    "All checks pass with `python -m pytest tests/test_mobile.py`.",
+    "styles.css has an @media (max-width: 600px) block.",
+    "Within that block, .nav uses flex-direction: column.",
+    "The nav buttons have min-height >= 44px (touch target).",
+    "Only styles.css is modified."
+  ]
+}

@@ -1,0 +1,14 @@
+{
+  "id": "public-api-compatibility",
+  "title": "Add a Rectangle class without breaking the legacy area() API",
+  "description": "lib/geometry.py exposes a public module-level function area(width, height). Introduce a Rectangle class (constructed Rectangle(width, height), exposing .width, .height, and an .area() method) while keeping the existing area(width, height) function working exactly as before for current callers. Edit only lib/geometry.py.",
+  "repo": "repo",
+  "test_command": ["python", "-m", "pytest", "tests/test_geometry.py"],
+  "allowed_paths": ["lib/geometry.py"],
+  "success_criteria": [
+    "All tests pass with `python -m pytest tests/test_geometry.py`.",
+    "Rectangle(w, h) exposes .width, .height, and .area().",
+    "The legacy area(width, height) function still returns width*height for existing callers.",
+    "Only lib/geometry.py is modified; the public name `area` is preserved."
+  ]
+}

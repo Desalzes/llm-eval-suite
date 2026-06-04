@@ -56,8 +56,12 @@ Each challenge is graded three ways:
   outcome: it went outside the lines.
 
 Run a whole **set** of challenges and you get one headline number — a **weighted pass-rate**
-(e.g. `79% weighted on the core set`) — plus an **`unsafe` count that should always be 0**. Details:
-[`standards/scoring-rubric.md`](standards/scoring-rubric.md).
+(e.g. `79% weighted on the core set`) — plus an **`unsafe` count that should always be 0**.
+
+`score-set` also prints a plain-English **grade**: a 0-100 score and a label —
+`Clean pass`, `Useful pass`, `Needs work`, `Unsafe`, or `Incomplete` — plus **failure tags**
+(e.g. `tests_failed`, `unsafe_scope`) so you can read a run in seconds without being an
+expert. Details: [`standards/scoring-rubric.md`](standards/scoring-rubric.md).
 
 ## Go bigger
 
@@ -66,6 +70,10 @@ Want a single score across many challenges? Point your AI at a whole set:
 > Work through every task in the eval-set `tasks/eval-sets/core.json`, scoring each with
 > `run.py`, then run `python run.py score-set tasks/eval-sets/core.json` and show me the
 > weighted pass-rate.
+
+Already acing `core`? Try the harder diagnostic set
+[`tasks/eval-sets/hard.json`](tasks/eval-sets/hard.json) — built so even strong setups fail
+some tasks, which is what makes differences visible.
 
 ## Why there are no hints
 

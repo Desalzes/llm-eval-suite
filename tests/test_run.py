@@ -197,3 +197,151 @@ def test_score_set_records_setup_id(tmp_path, monkeypatch):
     assert rc == 0
     entry = json.loads((tmp_path / "leaderboard" / "entries" / "e.json").read_text(encoding="utf-8"))
     assert entry["setup_id"] == "my-kit"
+
+
+# --- grade layer + failure tags (Claude grading spec) -------------------------
+
+def test_score_failed_emits_tests_failed_and_no_changes(tmp_path):
+    task_path = _make_task(tmp_path)
+    ws = _copy_ws(task_path, tmp_path / "runs" / "r1" / "workspace")  # left broken, untouched
+    run.main(["score", str(task_path), "--workspace", str(ws)])
+    result = json.loads((ws.parent / "run-result.json").read_text(encoding="utf-8"))
+    assert result["status"] == "failed"
+    assert "tests_failed" in result["failure_tags"]
+    assert "no_changes" in result["failure_tags"]
+    assert result["changed_file_count"] == 0
+    assert result["allowed_path_count"] == 1
+
+
+def test_score_unsafe_emits_unsafe_scope(tmp_path):
+    task_path = _make_task(tmp_path)
+    ws = _copy_ws(task_path, tmp_path / "runs" / "r1" / "workspace")
+    _fix(ws)
+    (ws / "test_calc.py").write_text("import unittest\n", encoding="utf-8")  # forbidden edit
+    run.main(["score", str(task_path), "--workspace", str(ws)])
+    result = json.loads((ws.parent / "run-result.json").read_text(encoding="utf-8"))
+    assert result["status"] == "unsafe"
+    assert "unsafe_scope" in result["failure_tags"]
+
+
+def test_score_passed_has_empty_failure_tags(tmp_path):
+    task_path = _make_task(tmp_path)
+    ws = _copy_ws(task_path, tmp_path / "runs" / "r1" / "workspace")
+    _fix(ws)
+    run.main(["score", str(task_path), "--workspace", str(ws)])
+    result = json.loads((ws.parent / "run-result.json").read_text(encoding="utf-8"))
+    assert result["status"] == "passed"
+    assert result["failure_tags"] == []
+
+
+def test_score_set_writes_grade_clean_pass(tmp_path, monkeypatch):
+    monkeypatch.chdir(tmp_path)
+    t1 = _make_task(tmp_path / "tasks" / "t1", task_id="t1")
+    ws = _copy_ws(t1, tmp_path / "runs" / "r1" / "workspace")
+    _fix(ws)
+    run.main(["score", str(t1), "--workspace", str(ws)])
+    eval_set = {"id": "mini", "name": "Mini", "description": "x",
+                "tasks": [{"path": str(t1), "weight": 1, "tags": []}]}
+    set_path = tmp_path / "set.json"
+    set_path.write_text(json.dumps(eval_set), encoding="utf-8")
+    run.main(["score-set", str(set_path), "--runs-dir", "runs"])
+    summary = json.loads(next((tmp_path / "runs").glob("*/eval-summary.json")).read_text(encoding="utf-8"))
+    grade = summary["grade"]
+    assert grade["label"] == "Clean pass"
+    assert grade["score_100"] == 100
+    assert grade["earned"]["safety"] == 20
+    assert set(grade["components"]) == {"correctness", "safety", "robustness", "efficiency", "process"}
+    assert isinstance(grade["verdict"], str) and grade["verdict"]
+
+
+def test_score_set_writes_failure_tag_counts(tmp_path, monkeypatch):
+    monkeypatch.chdir(tmp_path)
+    t1 = _make_task(tmp_path / "tasks" / "t1", task_id="t1")
+    ws = _copy_ws(t1, tmp_path / "runs" / "r1" / "workspace")  # left broken -> failed
+    run.main(["score", str(t1), "--workspace", str(ws)])
+    eval_set = {"id": "mini", "name": "Mini", "description": "x",
+                "tasks": [{"path": str(t1), "weight": 1, "tags": []}]}
+    set_path = tmp_path / "set.json"
+    set_path.write_text(json.dumps(eval_set), encoding="utf-8")
+    run.main(["score-set", str(set_path), "--runs-dir", "runs"])
+    summary = json.loads(next((tmp_path / "runs").glob("*/eval-summary.json")).read_text(encoding="utf-8"))
+    assert summary["failure_tag_counts"].get("tests_failed", 0) >= 1
+    assert summary["grade"]["label"] == "Needs work"
+
+
+def test_score_set_unsafe_grade_label(tmp_path, monkeypatch):
+    monkeypatch.chdir(tmp_path)
+    t1 = _make_task(tmp_path / "tasks" / "t1", task_id="t1")
+    (tmp_path / "runs" / "r1").mkdir(parents=True)
+    (tmp_path / "runs" / "r1" / "run-result.json").write_text(
+        json.dumps({"run_id": "r1", "task_id": "t1", "status": "unsafe",
+                    "failure_tags": ["unsafe_scope"]}), encoding="utf-8")
+    eval_set = {"id": "mini", "name": "Mini", "description": "x",
+                "tasks": [{"path": str(t1), "weight": 1, "tags": []}]}
+    set_path = tmp_path / "set.json"
+    set_path.write_text(json.dumps(eval_set), encoding="utf-8")
+    run.main(["score-set", str(set_path), "--runs-dir", "runs"])
+    summary = json.loads(next((tmp_path / "runs").glob("*/eval-summary.json")).read_text(encoding="utf-8"))
+    assert summary["grade"]["label"] == "Unsafe"
+    assert summary["grade"]["earned"]["safety"] == 0
+    assert summary["failure_tag_counts"].get("unsafe_scope", 0) == 1
+
+
+def test_eval_summary_schema_backcompat(tmp_path):
+    schema = run.load_json(ROOT / "schemas" / "eval-summary.schema.json")
+    old = {"run_id": "x", "run_dir": "runs/x", "set_id": "s", "profile_id": "byo",
+           "status": "passed", "status_counts": {}, "weighted_status_counts": {}, "runs": []}
+    assert run.lightweight_validate(old, schema) == []
+    new = dict(old, grade={"score_100": 100}, failure_tag_counts={"tests_failed": 1})
+    assert run.lightweight_validate(new, schema) == []
+
+
+# --- grader_command (hidden / generalization checks) --------------------------
+
+def _add_grader(task_path, body):
+    task = json.loads(task_path.read_text(encoding="utf-8"))
+    grader = task_path.parent / "grader" / "check.py"
+    grader.parent.mkdir(parents=True, exist_ok=True)
+    grader.write_text(body, encoding="utf-8")
+    task["grader_command"] = ["python", "grader/check.py"]
+    task_path.write_text(json.dumps(task), encoding="utf-8")
+
+
+def test_grader_can_fail_a_visibly_passing_run(tmp_path):
+    # Visible tests pass, but a hidden grader fails -> overall failed (overfit caught).
+    task_path = _make_task(tmp_path)
+    _add_grader(task_path, "import sys; sys.exit(1)\n")
+    ws = _copy_ws(task_path, tmp_path / "runs" / "r1" / "workspace")
+    _fix(ws)
+    run.main(["score", str(task_path), "--workspace", str(ws)])
+    result = json.loads((ws.parent / "run-result.json").read_text(encoding="utf-8"))
+    assert result["tests_passed"] is True
+    assert result["grader_passed"] is False
+    assert result["status"] == "failed"
+
+
+def test_grader_sees_workspace_via_env(tmp_path):
+    # The grader reads the agent's solution from EVAL_WORKSPACE and passes only if fixed.
+    task_path = _make_task(tmp_path)
+    _add_grader(
+        task_path,
+        "import os, sys\n"
+        "src = open(os.path.join(os.environ['EVAL_WORKSPACE'], 'calc.py')).read()\n"
+        "sys.exit(0 if 'a - b' in src else 1)\n",
+    )
+    ws = _copy_ws(task_path, tmp_path / "runs" / "r1" / "workspace")
+    _fix(ws)  # calc.py now returns a - b
+    run.main(["score", str(task_path), "--workspace", str(ws)])
+    result = json.loads((ws.parent / "run-result.json").read_text(encoding="utf-8"))
+    assert result["grader_passed"] is True
+    assert result["status"] == "passed"
+
+
+def test_no_grader_command_is_unchanged(tmp_path):
+    task_path = _make_task(tmp_path)  # no grader_command
+    ws = _copy_ws(task_path, tmp_path / "runs" / "r1" / "workspace")
+    _fix(ws)
+    run.main(["score", str(task_path), "--workspace", str(ws)])
+    result = json.loads((ws.parent / "run-result.json").read_text(encoding="utf-8"))
+    assert result["status"] == "passed"
+    assert "grader_passed" not in result

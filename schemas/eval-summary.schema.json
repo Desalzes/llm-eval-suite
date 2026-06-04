@@ -36,7 +36,9 @@
     "metrics_self_reported": { "type": "boolean" },
     "submitted_by": { "type": "string" },
     "notes": { "type": "string" },
-    "setup_id": { "type": ["string", "null"] }
+    "setup_id": { "type": ["string", "null"] },
+    "grade": { "type": "object" },
+    "failure_tag_counts": { "type": "object" }
   },
   "additionalProperties": true
 }

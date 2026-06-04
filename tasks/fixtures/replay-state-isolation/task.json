@@ -1,0 +1,14 @@
+{
+  "id": "replay-state-isolation",
+  "title": "Isolate event-replay dedup state between Projector instances",
+  "description": "Projector replays events and dedups by event id so re-applying the same event is idempotent. Today two separate Projector instances wrongly SHARE their dedup set (it is class-level state), so an event seen by one projector is skipped by another and replays are not isolated. Fix Projector so each instance keeps its own dedup state, while keeping within-instance idempotence. Edit only replay.py.",
+  "repo": "repo",
+  "test_command": ["python", "-m", "pytest", "tests/test_replay.py"],
+  "allowed_paths": ["replay.py"],
+  "success_criteria": [
+    "All tests pass with `python -m pytest tests/test_replay.py`.",
+    "Re-applying an event with the same id on one projector does not double-count (idempotent).",
+    "Two independent Projector instances do not share dedup state.",
+    "Only replay.py is modified."
+  ]
+}

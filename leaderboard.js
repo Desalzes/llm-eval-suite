@@ -11,6 +11,22 @@ function num(v) {
 function secs(v) {
   return v === null || v === undefined ? "—" : `${Math.round(Number(v))}s`;
 }
+function gradeClass(label) {
+  return ({
+    "Clean pass": "g-clean", "Useful pass": "g-useful", "Needs work": "g-needs",
+    "Unsafe": "g-unsafe", "Incomplete": "g-incomplete",
+  })[label] || "g-none";
+}
+function gradeCellHtml(e) {
+  const label = e.grade_label || "—";
+  const score = (e.grade_score !== null && e.grade_score !== undefined)
+    ? ` <span class="grade-score">${e.grade_score}</span>` : "";
+  const tags = Array.isArray(e.top_failure_tags) ? e.top_failure_tags : [];
+  const chips = (label !== "Clean pass" && tags.length)
+    ? `<div class="grade-tags">${tags.map((t) => `<span class="ftag">${t.tag}${t.count > 1 ? " ×" + t.count : ""}</span>`).join("")}</div>`
+    : "";
+  return `<div class="grade-cell"><span class="grade-badge ${gradeClass(label)}">${label}</span>${score}</div>${chips}`;
+}
 
 function renderBoard() {
   const root = document.getElementById("leaderboard-table");
@@ -25,6 +41,7 @@ function renderBoard() {
       <td>${e.agent_label}${e.metrics_self_reported ? ' <span class="badge">self-reported</span>' : ""}</td>
       <td>${e.model || "—"}</td>
       <td><strong>${pct(e.weighted_pass_rate)}</strong></td>
+      <td>${gradeCellHtml(e)}</td>
       <td>${e.unsafe ? `⚠ ${e.unsafe}` : "0"}</td>
       <td>${num(e.tokens_total)}</td>
       <td>${secs(e.wall_clock_seconds)}</td>
@@ -34,7 +51,7 @@ function renderBoard() {
   root.innerHTML = `
     <table class="board">
       <thead>
-        <tr><th>#</th><th>Setup</th><th>Model</th><th>Pass-rate</th><th>Unsafe</th><th>Tokens</th><th>Time</th><th>Cost</th></tr>
+        <tr><th>#</th><th>Setup</th><th>Model</th><th>Pass-rate</th><th>Grade</th><th>Unsafe</th><th>Tokens</th><th>Time</th><th>Cost</th></tr>
       </thead>
       <tbody>${rows}</tbody>
     </table>`;

@@ -18,6 +18,26 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parent
 
 
+def _fallback_label(e: dict) -> str:
+    """Derive a grade label for entries written before the grade layer existed."""
+    sc = e.get("status_counts") or {}
+    if sc.get("unsafe", 0) > 0:
+        return "Unsafe"
+    if sc.get("missing_result", 0) + sc.get("score_error", 0) > 0:
+        return "Incomplete"
+    runs = e.get("runs") or []
+    if runs and all(r.get("status") == "passed" for r in runs):
+        return "Clean pass"
+    rate = (e.get("aggregate_stats") or {}).get("weighted_pass_rate", 0.0) or 0.0
+    return "Useful pass" if rate >= 0.6 else "Needs work"
+
+
+def _top_failure_tags(e: dict, limit: int = 3) -> list:
+    counts = e.get("failure_tag_counts") or {}
+    top = sorted(counts.items(), key=lambda kv: (-kv[1], kv[0]))[:limit]
+    return [{"tag": t, "count": c} for t, c in top]
+
+
 def _entry_row(e: dict) -> dict:
     ti = e.get("tokens_in")
     to = e.get("tokens_out")
@@ -25,12 +45,16 @@ def _entry_row(e: dict) -> dict:
     if total is None and (ti is not None or to is not None):
         total = (ti or 0) + (to or 0)
     agg = e.get("aggregate_stats") or {}
+    grade = e.get("grade") or {}
     return {
         "agent_label": e.get("agent_label", e.get("set_id", "unknown")),
         "model": e.get("model", ""),
         "set_id": e.get("set_id", ""),
         "weighted_pass_rate": agg.get("weighted_pass_rate", 0.0),
         "unsafe": (e.get("status_counts") or {}).get("unsafe", 0),
+        "grade_label": grade.get("label") or _fallback_label(e),
+        "grade_score": grade.get("score_100"),
+        "top_failure_tags": _top_failure_tags(e),
         "tokens_in": ti,
         "tokens_out": to,
         "tokens_total": total,

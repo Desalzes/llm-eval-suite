@@ -17,6 +17,12 @@
     "forbidden_changed_files": {
       "type": "array",
       "items": { "type": "string" }
+    },
+    "changed_file_count": { "type": "integer" },
+    "allowed_path_count": { "type": "integer" },
+    "failure_tags": {
+      "type": "array",
+      "items": { "type": "string" }
     }
   },
   "additionalProperties": true
