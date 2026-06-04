@@ -1,0 +1,12 @@
+# GitHub "Sponsor" button + funding links for llm-eval-suite.
+# Docs: https://docs.github.com/en/repositories/managing-your-repositorys-settings-and-features/customizing-your-repository/displaying-a-sponsor-button-in-your-repository
+#
+# NOTE: the `github:` line renders a WORKING Sponsor button only once GitHub
+# Sponsors is enabled on the account (github.com/sponsors -> set up). Until then,
+# or instead, uncomment a platform you already control (Ko-fi / Buy Me a Coffee /
+# a custom donate URL) and remove/keep the github line as appropriate.
+
+github: [Desalzes]
+# ko_fi: your-kofi-name
+# buy_me_a_coffee: your-bmac-name
+# custom: ["https://your-donate-link"]
