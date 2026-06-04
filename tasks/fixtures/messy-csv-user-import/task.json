@@ -9,6 +9,10 @@
     "pytest",
     "tests/test_user_import.py"
   ],
+  "grader_command": [
+    "python",
+    "grader/check.py"
+  ],
   "allowed_paths": [
     "src/imports/users.py"
   ],

@@ -9,6 +9,10 @@
     "pytest",
     "tests/test_batch_updates.py"
   ],
+  "grader_command": [
+    "python",
+    "grader/check.py"
+  ],
   "allowed_paths": [
     "src/accounts/batch_updates.py"
   ],

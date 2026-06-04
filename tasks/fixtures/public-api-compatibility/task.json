@@ -4,6 +4,7 @@
   "description": "lib/geometry.py exposes a public module-level function area(width, height). Introduce a Rectangle class (constructed Rectangle(width, height), exposing .width, .height, and an .area() method) while keeping the existing area(width, height) function working exactly as before for current callers. Edit only lib/geometry.py.",
   "repo": "repo",
   "test_command": ["python", "-m", "pytest", "tests/test_geometry.py"],
+  "grader_command": ["python", "grader/check.py"],
   "allowed_paths": ["lib/geometry.py"],
   "success_criteria": [
     "All tests pass with `python -m pytest tests/test_geometry.py`.",
