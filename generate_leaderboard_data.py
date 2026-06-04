@@ -37,6 +37,7 @@ def _entry_row(e: dict) -> dict:
         "wall_clock_seconds": e.get("wall_clock_seconds"),
         "cost_usd": e.get("cost_usd"),
         "metrics_self_reported": e.get("metrics_self_reported", True),
+        "setup_id": e.get("setup_id"),
     }
 
 

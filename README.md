@@ -73,6 +73,26 @@ This repo deliberately ships **no skill files, no walkthroughs, no solutions** �
 to figure each challenge out on its own. That's the point: the score measures what *your*
 setup can do, not how much we spoon-fed it.
 
+## Setups — customize what your AI runs with
+
+A **setup** is the kit you hand your AI before a run: an instructions file
+(`CLAUDE.md`/`AGENTS.md`) plus reusable **skills**, bundled in a folder under
+[`setups/`](setups/). The repo ships a couple of *generic* example setups (good
+habits like "verify before you claim done" — never challenge answers), and you can
+make your own:
+
+    python run.py setup new my-kit      # scaffold setups/my-kit/
+    python run.py setup validate my-kit # check it (warns on task-specific hints)
+    python generate_setups_data.py      # refresh what the GUI shows
+
+Then tag your score with the setup you used so the leaderboard links them:
+
+    python run.py score-set tasks/eval-sets/core.json --setup my-kit --emit-entry my-kit-core
+
+This is the customizable counterpart to "no hints": the repo ships no *solving*
+aids, but YOUR setup is yours to craft — and that's exactly what the score measures.
+See [`setups/README.md`](setups/README.md).
+
 ## Add your own challenge
 
 Got a coding problem that would make a good test? Anyone can contribute — see
@@ -100,6 +120,7 @@ challenge, its category, and how it's scored.
 - `schemas/` — the JSON-Schema contracts (`task`, `eval-set`, `run-result`, `eval-summary`, …).
 - `standards/` — the task format and scoring rules.
 - `context-packs/` — optional example agent configs (not needed to play).
+- `setups/` — your agent setups (skills + instructions you give your AI); see [`setups/README.md`](setups/README.md). `generate_setups_data.py` feeds the GUI's Setups view.
 - `index.html`, `app.js`, `styles.css`, `atlas-data.js`, `generate_atlas_data.py` — the visual atlas.
 
 ## License

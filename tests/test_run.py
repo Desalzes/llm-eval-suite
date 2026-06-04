@@ -180,3 +180,20 @@ def test_score_ignores_test_scratch_dirs(tmp_path):
     assert result["status"] == "passed"
     assert all(".pytest-tmp" not in f for f in result["changed_files"])
     assert result["forbidden_changed_files"] == []
+
+
+def test_score_set_records_setup_id(tmp_path, monkeypatch):
+    monkeypatch.chdir(tmp_path)
+    t1 = _make_task(tmp_path / "tasks" / "t1", task_id="t1")
+    (tmp_path / "runs" / "r1").mkdir(parents=True)
+    (tmp_path / "runs" / "r1" / "run-result.json").write_text(
+        json.dumps({"run_id": "r1", "task_id": "t1", "status": "passed"}), encoding="utf-8")
+    eval_set = {"id": "mini", "name": "Mini", "description": "x",
+                "tasks": [{"path": str(t1), "weight": 1, "tags": []}]}
+    set_path = tmp_path / "set.json"
+    set_path.write_text(json.dumps(eval_set), encoding="utf-8")
+    rc = run.main(["score-set", str(set_path), "--runs-dir", "runs",
+                   "--setup", "my-kit", "--emit-entry", "e"])
+    assert rc == 0
+    entry = json.loads((tmp_path / "leaderboard" / "entries" / "e.json").read_text(encoding="utf-8"))
+    assert entry["setup_id"] == "my-kit"

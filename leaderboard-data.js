@@ -15,6 +15,7 @@ window.LEADERBOARD_DATA = {
       "wall_clock_seconds": null,
       "cost_usd": null,
       "metrics_self_reported": false,
+      "setup_id": null,
       "rank": 1
     },
     {
@@ -29,6 +30,7 @@ window.LEADERBOARD_DATA = {
       "wall_clock_seconds": null,
       "cost_usd": null,
       "metrics_self_reported": false,
+      "setup_id": null,
       "rank": 2
     },
     {
@@ -43,6 +45,7 @@ window.LEADERBOARD_DATA = {
       "wall_clock_seconds": 0.0,
       "cost_usd": null,
       "metrics_self_reported": true,
+      "setup_id": null,
       "rank": 3
     }
   ]
