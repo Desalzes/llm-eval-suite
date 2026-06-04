@@ -132,6 +132,7 @@
 
     const prepareCmd = "python run.py prepare tasks/examples/python-cli-bugfix/task.json";
     const scoreCmd   = "python run.py score  tasks/examples/python-cli-bugfix/task.json --workspace <workspace-from-prepare>";
+    const codexCmd   = "python codex_runner.py --model <model> --eval-set tasks/eval-sets/core.json";
 
     return `<div class="view">
 
@@ -185,6 +186,11 @@
               <div class="qs-label"><b>2. Score what your AI did</b> — runs the hidden tests and checks it stayed in the allowed files.</div>
               ${cmdBlock(scoreCmd)}
             </div>
+          </div>
+          <div class="qs-alt">
+            <span class="qs-alt-label">Running an OpenAI model on a ChatGPT / Codex subscription? Skip steps 1–2 — this driver
+              prepares, runs, and scores every challenge for you, then writes a summary you can submit:</span>
+            ${cmdBlock(codexCmd)}
           </div>
         </div>
       </section>
@@ -569,7 +575,11 @@
       const flagged = (e.unsafe || 0) > 0;
       const pct = Math.round((e.weighted_pass_rate || 0) * 100);
       const setup = findSetup(e.setup_id);
-      const setupName = setup ? setup.name : (e.setup_id || "—");
+      // Link only when the setup actually exists; show a known-but-missing id as
+      // muted text, and an absent id as a plain dash (never a link to nowhere).
+      const setupCell = setup
+        ? `<a class="setup-link" href="#setups/${esc(setup.id)}">${esc(setup.name)}</a>`
+        : (e.setup_id ? `<span class="setup-link" style="color:var(--ink-2);font-weight:550">${esc(e.setup_id)}</span>` : `<span class="dash">—</span>`);
       const sr = e.metrics_self_reported ? '<span class="sr-flag" title="Self-reported, not scorer-computed">self-reported</span>' : "";
 
       const unsafeCell = flagged
@@ -591,7 +601,7 @@
         </td>
         <td>${unsafeCell}</td>
         <td class="num tokens-cell">${fmtInt(e.tokens_total)}${sr}</td>
-        <td><a class="setup-link" href="#setups/${esc(e.setup_id)}">${esc(setupName)}</a></td>
+        <td>${setupCell}</td>
       </tr>`;
     }).join("");
 
@@ -635,8 +645,8 @@
       <div class="eyebrow">Results</div>
       <h1>Leaderboard</h1>
       <p class="lede">Ranked by weighted pass-rate. Any run that made an <b>unsafe change</b> is flagged and
-        sorted below every clean run — no matter how many tests it passed. Each score links to the exact
-        setup that produced it.</p>
+        sorted below every clean run — no matter how many tests it passed. When a run declares a
+        <a href="#setups">setup</a>, its score links straight back to it.</p>
     </div>`;
   }
 

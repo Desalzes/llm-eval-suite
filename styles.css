@@ -241,6 +241,8 @@ kbd {
 .qs-steps { display: flex; flex-direction: column; gap: 16px; margin-top: 18px; }
 .qs-step .qs-label { font-size: 13.5px; color: var(--ink-2); margin-bottom: 7px; }
 .qs-step .qs-label b { color: var(--ink); font-weight: 650; }
+.qs-alt { margin-top: 18px; padding-top: 16px; border-top: 1px dashed var(--border-2); }
+.qs-alt .qs-alt-label { display: block; font-size: 13px; color: var(--ink-2); margin-bottom: 9px; text-wrap: pretty; }
 
 .meaning { margin-top: 40px; }
 .meaning .m-grid { display: grid; grid-template-columns: repeat(3,1fr); gap: 16px; margin-top: 6px; }
@@ -562,4 +564,11 @@ table.lb tbody tr.flagged:hover { background: #fbecee; }
   .challenge-row .cr-arrow { order: 2; margin-left: auto; }
   .challenge-row .cr-main { order: 3; flex-basis: 100%; }
   .challenge-row .cr-chips { order: 4; flex-basis: 100%; flex-wrap: wrap; }
+  /* command blocks: give the command the full width and drop the copy button to
+     a footer bar, so long commands aren't squeezed/truncated on phones. */
+  .cmd { flex-direction: column; align-items: stretch; }
+  .cmd code { font-size: 12px; padding: 10px 12px; }
+  .cmd .copy { justify-content: center; border-left: 0; border-top: 1px solid rgba(255,255,255,.08); padding: 9px 14px; }
+  .cmd.light .copy { border-top-color: var(--border); }
+  .quickstart .qs-card { padding: 20px 16px; }
 }

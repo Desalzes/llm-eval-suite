@@ -150,5 +150,6 @@
   "tokens_in": 0,
   "tokens_out": 0,
   "notes": "floor; core set; single-trial",
+  "setup_id": "vanilla-baseline",
   "metrics_self_reported": true
 }

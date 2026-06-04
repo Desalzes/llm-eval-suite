@@ -45,7 +45,7 @@ window.LEADERBOARD_DATA = {
       "wall_clock_seconds": 0.0,
       "cost_usd": null,
       "metrics_self_reported": true,
-      "setup_id": null,
+      "setup_id": "vanilla-baseline",
       "rank": 3
     }
   ]

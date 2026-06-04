@@ -93,7 +93,7 @@ window.SETUPS_DATA = {
       "badges": [
         "baseline"
       ],
-      "usedInRuns": 0,
+      "usedInRuns": 1,
       "contextPack": null,
       "instructions": {
         "file": null,
