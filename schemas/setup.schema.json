@@ -1,0 +1,23 @@
+{
+  "type": "object",
+  "required": ["id", "name"],
+  "properties": {
+    "id": { "type": "string" },
+    "name": { "type": "string" },
+    "description": { "type": "string" },
+    "agent": { "type": "string" },
+    "model": { "type": ["string", "null"] },
+    "instructions_file": { "type": ["string", "null"] },
+    "skills": {
+      "type": "array",
+      "items": { "type": "string" }
+    },
+    "context_pack": { "type": ["string", "null"] },
+    "badges": {
+      "type": "array",
+      "items": { "type": "string" }
+    },
+    "created": { "type": "string" }
+  },
+  "additionalProperties": true
+}

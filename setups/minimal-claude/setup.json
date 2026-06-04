@@ -1,0 +1,12 @@
+{
+  "id": "minimal-claude",
+  "name": "Minimal",
+  "description": "The least instruction possible - measures what your raw agent can do.",
+  "agent": "Any",
+  "model": null,
+  "instructions_file": "CLAUDE.md",
+  "skills": [],
+  "context_pack": "minimal-coding-agent",
+  "badges": ["example"],
+  "created": "2026-06-04"
+}

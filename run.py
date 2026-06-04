@@ -9,6 +9,7 @@ Verbs:
   score     <task.json> --workspace <dir>       grade a solved workspace -> run-result.json
   score-set <eval-set.json> [--runs-dir runs]   aggregate per-task results -> eval-summary.json
   validate  <task.json>                         check a candidate task abides by the template
+  setup     new|list|show|validate <name>       manage agent setups (skills + instructions)
 """
 from __future__ import annotations
 
@@ -224,7 +225,7 @@ def cmd_score_set(args) -> int:
         ("wall_clock_seconds", args.seconds),
         ("tokens_in", args.tokens_in), ("tokens_out", args.tokens_out),
         ("cost_usd", args.cost_usd), ("submitted_by", args.submitted_by),
-        ("notes", args.notes),
+        ("notes", args.notes), ("setup_id", args.setup),
     ):
         if val is not None:
             summary[key] = val
@@ -247,17 +248,25 @@ def cmd_score_set(args) -> int:
 
 
 def lightweight_validate(obj: dict, schema: dict) -> list:
-    """Return error strings (empty == ok). Not a full JSON-Schema engine — stdlib only."""
+    """Return error strings (empty == ok). Not a full JSON-Schema engine — stdlib only.
+
+    A property's ``type`` may be a single JSON type or a list of them
+    (e.g. ``["string", "null"]``); the value matches if it satisfies any listed type.
+    """
     errors = []
     for key in schema.get("required", []):
         if key not in obj:
             errors.append(f"missing required field: {key}")
     type_map = {"string": str, "array": list, "object": dict, "integer": int, "boolean": bool}
     for key, spec in schema.get("properties", {}).items():
-        if key in obj and "type" in spec:
-            py = type_map.get(spec["type"])
-            if py and not isinstance(obj[key], py):
-                errors.append(f"field {key} should be {spec['type']}")
+        if key not in obj or "type" not in spec:
+            continue
+        types = spec["type"] if isinstance(spec["type"], list) else [spec["type"]]
+        if "null" in types and obj[key] is None:
+            continue
+        pys = tuple(type_map[t] for t in types if t in type_map)
+        if pys and not isinstance(obj[key], pys):
+            errors.append(f"field {key} should be {spec['type']}")
     return errors
 
 
@@ -306,6 +315,163 @@ def cmd_validate(args) -> int:
     return 0
 
 
+# --- setup management (the kit you give your AI: skills + instructions) -------
+
+SETUP_TEMPLATE_INSTRUCTIONS = """\
+# {name} - operating rules
+
+Write the instructions you want your AI to follow here. For example:
+
+- Read the task and the failing tests first.
+- Edit only the files listed in the task's allowed_paths.
+- Run the test command and make it pass before claiming done.
+"""
+
+
+def _setups_dir() -> Path:
+    return Path("setups")
+
+
+def _setup_dir(name: str) -> Path:
+    return _setups_dir() / name
+
+
+def _iter_setup_manifests():
+    base = _setups_dir()
+    if not base.is_dir():
+        return
+    for manifest in sorted(base.glob("*/setup.json")):
+        try:
+            yield manifest, load_json(manifest)
+        except (OSError, json.JSONDecodeError):
+            continue
+
+
+def _setup_files(setup_dir: Path) -> list:
+    out = []
+    for p in sorted(setup_dir.rglob("*")):
+        if p.is_dir() or p.name == ".gitkeep":
+            continue
+        out.append(p.relative_to(setup_dir).as_posix())
+    return out
+
+
+def _fixture_ids() -> set:
+    base = Path("tasks") / "fixtures"
+    if not base.is_dir():
+        return set()
+    return {p.name for p in base.iterdir() if p.is_dir()}
+
+
+def cmd_setup_new(args) -> int:
+    name = args.name
+    setup_dir = _setup_dir(name)
+    if setup_dir.exists():
+        print(f"ERROR: setup already exists: {setup_dir.as_posix()}", file=sys.stderr)
+        return 1
+    (setup_dir / "skills").mkdir(parents=True, exist_ok=True)
+    (setup_dir / "skills" / ".gitkeep").write_text("", encoding="utf-8")
+    (setup_dir / "CLAUDE.md").write_text(
+        SETUP_TEMPLATE_INSTRUCTIONS.format(name=name), encoding="utf-8")
+    manifest = {
+        "id": name,
+        "name": name,
+        "description": "",
+        "agent": "",
+        "model": None,
+        "instructions_file": "CLAUDE.md",
+        "skills": [],
+        "context_pack": None,
+        "created": datetime.now(timezone.utc).strftime("%Y-%m-%d"),
+    }
+    (setup_dir / "setup.json").write_text(
+        json.dumps(manifest, indent=2) + "\n", encoding="utf-8")
+    print(f"Created setup: {setup_dir.as_posix()}/")
+    print("  setup.json   - manifest (edit name/description/agent/model)")
+    print("  CLAUDE.md    - instructions your AI loads")
+    print("  skills/      - drop skill folders here (each a SKILL.md)")
+    print("Next:")
+    print("  1. Edit those files in your editor.")
+    print(f"  2. python run.py setup validate {name}")
+    print("  3. python generate_setups_data.py   (refresh the GUI)")
+    return 0
+
+
+def cmd_setup_list(args) -> int:
+    rows = list(_iter_setup_manifests())
+    if not rows:
+        print("No setups yet. Create one: python run.py setup new <name>")
+        return 0
+    for manifest_path, data in rows:
+        skills = data.get("skills") or []
+        badges = data.get("badges") or []
+        tag = f" [{', '.join(badges)}]" if badges else ""
+        print(f"{data.get('id', manifest_path.parent.name):24} "
+              f"{data.get('name', '')}  ({len(skills)} skills){tag}")
+    return 0
+
+
+def cmd_setup_show(args) -> int:
+    setup_dir = _setup_dir(args.name)
+    manifest_path = setup_dir / "setup.json"
+    if not manifest_path.exists():
+        print(f"ERROR: no such setup: {setup_dir.as_posix()}", file=sys.stderr)
+        return 1
+    data = load_json(manifest_path)
+    print(f"# {data.get('name', args.name)}  ({data.get('id', args.name)})")
+    if data.get("description"):
+        print(data["description"])
+    print(f"agent: {data.get('agent') or '-'}   model: {data.get('model') or '-'}")
+    print(f"context_pack: {data.get('context_pack') or '-'}")
+    print("files:")
+    for rel in _setup_files(setup_dir):
+        print(f"  {rel}")
+    return 0
+
+
+def cmd_setup_validate(args) -> int:
+    setup_dir = _setup_dir(args.name)
+    manifest_path = setup_dir / "setup.json"
+    try:
+        data = load_json(manifest_path)
+    except (OSError, json.JSONDecodeError) as exc:
+        print(f"INVALID: cannot read setup.json: {exc}")
+        return 1
+    reasons = []
+    schema_path = Path("schemas/setup.schema.json")
+    if schema_path.exists():
+        reasons += lightweight_validate(data, load_json(schema_path))
+    else:
+        reasons += [f"missing required field: {k}" for k in ("id", "name") if k not in data]
+    instr = data.get("instructions_file")
+    if instr and not (setup_dir / instr).exists():
+        reasons.append(f"instructions_file not found: {instr}")
+    for skill in (data.get("skills") or []):
+        if not (setup_dir / "skills" / skill / "SKILL.md").exists():
+            reasons.append(f"skill not found: skills/{skill}/SKILL.md")
+    if reasons:
+        print("INVALID:")
+        for r in reasons:
+            print(f"  - {r}")
+        return 1
+    blob = []
+    for rel in _setup_files(setup_dir):
+        if rel == "setup.json":
+            continue
+        try:
+            blob.append((setup_dir / rel).read_text(encoding="utf-8"))
+        except (OSError, UnicodeDecodeError):
+            continue
+    hits = sorted(fid for fid in _fixture_ids() if fid in "\n".join(blob))
+    if hits:
+        print(f"VALID (with WARNING): {data['id']}")
+        print(f"  WARNING: setup text mentions challenge id(s): {hits}")
+        print("  A setup must be general - it must not contain task-specific answers/hints.")
+        return 0
+    print(f"VALID: {data['id']} - general setup, no challenge-specific hints found")
+    return 0
+
+
 def build_parser() -> argparse.ArgumentParser:
     p = argparse.ArgumentParser(prog="run.py", description="llm-eval-suite reference scorer (scorer-only)")
     sub = p.add_subparsers(dest="cmd", required=True)
@@ -330,12 +496,28 @@ def build_parser() -> argparse.ArgumentParser:
     st.add_argument("--cost-usd", type=float, dest="cost_usd")
     st.add_argument("--submitted-by", dest="submitted_by")
     st.add_argument("--notes")
+    st.add_argument("--setup", dest="setup",
+                    help="record which setup produced this result (links score -> setup on the board)")
     st.add_argument("--emit-entry", dest="emit_entry")
     st.set_defaults(func=cmd_score_set)
 
     sv = sub.add_parser("validate", help="check a candidate task abides by the template")
     sv.add_argument("task")
     sv.set_defaults(func=cmd_validate)
+
+    se = sub.add_parser("setup", help="manage agent setups (the skills + instructions you give your AI)")
+    se_sub = se.add_subparsers(dest="setup_cmd", required=True)
+    se_new = se_sub.add_parser("new", help="scaffold a new setup folder")
+    se_new.add_argument("name")
+    se_new.set_defaults(func=cmd_setup_new)
+    se_list = se_sub.add_parser("list", help="list setups")
+    se_list.set_defaults(func=cmd_setup_list)
+    se_show = se_sub.add_parser("show", help="print a setup's manifest + files")
+    se_show.add_argument("name")
+    se_show.set_defaults(func=cmd_setup_show)
+    se_val = se_sub.add_parser("validate", help="check a setup (warns on task-specific hints)")
+    se_val.add_argument("name")
+    se_val.set_defaults(func=cmd_setup_validate)
 
     return p
 

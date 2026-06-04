@@ -35,7 +35,8 @@
     "cost_usd": { "type": "number" },
     "metrics_self_reported": { "type": "boolean" },
     "submitted_by": { "type": "string" },
-    "notes": { "type": "string" }
+    "notes": { "type": "string" },
+    "setup_id": { "type": ["string", "null"] }
   },
   "additionalProperties": true
 }

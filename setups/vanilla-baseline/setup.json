@@ -1,0 +1,12 @@
+{
+  "id": "vanilla-baseline",
+  "name": "Vanilla baseline",
+  "description": "No setup at all. The floor: what happens with zero help.",
+  "agent": "None",
+  "model": null,
+  "instructions_file": null,
+  "skills": [],
+  "context_pack": null,
+  "badges": ["baseline"],
+  "created": "2026-06-04"
+}

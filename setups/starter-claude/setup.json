@@ -1,0 +1,12 @@
+{
+  "id": "starter-claude",
+  "name": "Starter (Claude)",
+  "description": "A generic strict-verification kit: read carefully, change only allowed files, prove it with tests before claiming done.",
+  "agent": "Claude Code",
+  "model": "claude-opus-4-8",
+  "instructions_file": "CLAUDE.md",
+  "skills": ["verification", "scope-control"],
+  "context_pack": "strict-verification-agent",
+  "badges": ["example"],
+  "created": "2026-06-04"
+}
