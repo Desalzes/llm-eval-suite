@@ -284,6 +284,25 @@ def cmd_score_set(args) -> int:
     set_path = Path(args.eval_set).resolve()
     eval_set = load_json(set_path)
     runs_dir = Path(args.runs_dir)
+    # Leaderboard attribution: an emitted entry must declare an EXISTING setup so the
+    # result is reproducible (the board scores an agent+model+setup, not just a model).
+    if args.emit_entry and not args.setup:
+        print("Leaderboard entries require --setup <setup-id> so results are reproducible.")
+        return 2
+    if args.setup:
+        setup_file = Path("setups") / args.setup / "setup.json"
+        if not setup_file.exists():
+            print(f"error: setup '{args.setup}' not found (expected {setup_file.as_posix()}); "
+                  "create it with `python run.py setup new <name>`.")
+            return 2
+        try:
+            declared_id = json.loads(setup_file.read_text(encoding="utf-8")).get("id")
+        except (OSError, json.JSONDecodeError):
+            declared_id = None
+        if declared_id != args.setup:
+            print(f"error: setup id mismatch - {setup_file.as_posix()} declares "
+                  f"'{declared_id}', not '{args.setup}'.")
+            return 2
     status_counts, weighted_counts, runs = {}, {}, []
     failure_tag_counts = {}
     total_weight = passed_weight = 0
@@ -617,7 +636,7 @@ def build_parser() -> argparse.ArgumentParser:
     st.add_argument("--submitted-by", dest="submitted_by")
     st.add_argument("--notes")
     st.add_argument("--setup", dest="setup",
-                    help="record which setup produced this result (links score -> setup on the board)")
+                    help="setup id that produced this result (REQUIRED with --emit-entry; links score -> setup on the board)")
     st.add_argument("--emit-entry", dest="emit_entry")
     st.set_defaults(func=cmd_score_set)
 

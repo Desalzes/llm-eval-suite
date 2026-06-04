@@ -11,7 +11,7 @@ import generate_leaderboard_data as gen
 
 def _entry(slug, rate, unsafe=0, ti=None, to=None, secs=None):
     return {
-        "set_id": "smoke", "agent_label": slug, "model": "m",
+        "set_id": "smoke", "agent_label": slug, "model": "m", "setup_id": "test-setup",
         "status_counts": {"passed": 1, "unsafe": unsafe} if unsafe else {"passed": 1},
         "aggregate_stats": {"weighted_pass_rate": rate},
         "tokens_in": ti, "tokens_out": to, "wall_clock_seconds": secs,
@@ -54,3 +54,23 @@ def test_emits_loadable_js(tmp_path):
     blob = text.split("window.LEADERBOARD_DATA = ", 1)[1].rsplit(";", 1)[0].strip()
     parsed = json.loads(blob)
     assert parsed["count"] == 1 and parsed["entries"][0]["rank"] == 1
+
+
+def test_unattributed_entry_is_skipped(tmp_path):
+    _write(tmp_path, "tagged", _entry("tagged", 0.9))
+    bad = _entry("untagged", 0.95)
+    bad.pop("setup_id")
+    _write(tmp_path, "untagged", bad)
+    data = gen.build_leaderboard_data(tmp_path)
+    assert [r["agent_label"] for r in data["entries"]] == ["tagged"]  # untagged excluded
+    assert data["count"] == 1
+
+
+def test_real_entries_all_declare_a_setup():
+    """Guard: every shipped leaderboard entry must declare the setup that produced it."""
+    entries_dir = ROOT / "leaderboard" / "entries"
+    missing = [
+        p.name for p in sorted(entries_dir.glob("*.json"))
+        if not json.loads(p.read_text(encoding="utf-8")).get("setup_id")
+    ]
+    assert not missing, f"leaderboard entries missing setup_id: {missing}"

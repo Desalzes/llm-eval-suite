@@ -85,9 +85,14 @@ def build_leaderboard_data(root: Path = ROOT) -> dict:
     if entries_dir.exists():
         for p in sorted(entries_dir.glob("*.json")):
             try:
-                rows.append(_entry_row(json.loads(p.read_text(encoding="utf-8"))))
+                entry = json.loads(p.read_text(encoding="utf-8"))
             except (OSError, json.JSONDecodeError):
                 continue
+            if not entry.get("setup_id"):
+                print(f"  WARNING: skipping {p.name} - no setup_id "
+                      "(every leaderboard entry must declare the setup that produced it)")
+                continue
+            rows.append(_entry_row(entry))
     rows.sort(key=_sort_key)
     for i, r in enumerate(rows, 1):
         r["rank"] = i

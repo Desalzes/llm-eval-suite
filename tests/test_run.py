@@ -38,6 +38,17 @@ def _make_task(base, task_id="tiny-sub", allowed=None):
     return task_path
 
 
+def _make_setup(root, setup_id):
+    """Create a minimal setups/<id>/setup.json so `score-set --setup` validates."""
+    d = Path(root) / "setups" / setup_id
+    d.mkdir(parents=True, exist_ok=True)
+    (d / "setup.json").write_text(
+        json.dumps({"id": setup_id, "name": setup_id.replace("-", " ").title()}),
+        encoding="utf-8",
+    )
+    return d
+
+
 def _copy_ws(task_path, dest):
     dest = Path(dest)
     shutil.copytree(task_path.parent / "repo", dest)
@@ -140,6 +151,7 @@ def test_validate_rejects_missing_repo(tmp_path):
 
 def test_score_set_emits_leaderboard_entry(tmp_path, monkeypatch):
     monkeypatch.chdir(tmp_path)
+    _make_setup(tmp_path, "my-setup")
     t1 = _make_task(tmp_path / "tasks" / "t1", task_id="t1")
     t2 = _make_task(tmp_path / "tasks" / "t2", task_id="t2")
     (tmp_path / "runs" / "r1").mkdir(parents=True)
@@ -155,7 +167,8 @@ def test_score_set_emits_leaderboard_entry(tmp_path, monkeypatch):
     set_path.write_text(json.dumps(eval_set), encoding="utf-8")
     rc = run.main(["score-set", str(set_path), "--runs-dir", "runs",
                    "--agent", "My Setup", "--model", "claude-x", "--seconds", "12.5",
-                   "--tokens-in", "1000", "--tokens-out", "500", "--emit-entry", "my-setup"])
+                   "--tokens-in", "1000", "--tokens-out", "500",
+                   "--setup", "my-setup", "--emit-entry", "my-setup"])
     assert rc == 0
     entry = json.loads((tmp_path / "leaderboard" / "entries" / "my-setup.json").read_text(encoding="utf-8"))
     assert entry["agent_label"] == "My Setup"
@@ -184,6 +197,7 @@ def test_score_ignores_test_scratch_dirs(tmp_path):
 
 def test_score_set_records_setup_id(tmp_path, monkeypatch):
     monkeypatch.chdir(tmp_path)
+    _make_setup(tmp_path, "my-kit")
     t1 = _make_task(tmp_path / "tasks" / "t1", task_id="t1")
     (tmp_path / "runs" / "r1").mkdir(parents=True)
     (tmp_path / "runs" / "r1" / "run-result.json").write_text(
@@ -197,6 +211,35 @@ def test_score_set_records_setup_id(tmp_path, monkeypatch):
     assert rc == 0
     entry = json.loads((tmp_path / "leaderboard" / "entries" / "e.json").read_text(encoding="utf-8"))
     assert entry["setup_id"] == "my-kit"
+
+
+def _mini_set_with_result(tmp_path):
+    t1 = _make_task(tmp_path / "tasks" / "t1", task_id="t1")
+    (tmp_path / "runs" / "r1").mkdir(parents=True)
+    (tmp_path / "runs" / "r1" / "run-result.json").write_text(
+        json.dumps({"run_id": "r1", "task_id": "t1", "status": "passed"}), encoding="utf-8")
+    set_path = tmp_path / "set.json"
+    set_path.write_text(json.dumps({"id": "mini", "name": "Mini", "description": "x",
+                                    "tasks": [{"path": str(t1), "weight": 1, "tags": []}]}),
+                        encoding="utf-8")
+    return set_path
+
+
+def test_score_set_emit_without_setup_fails(tmp_path, monkeypatch):
+    monkeypatch.chdir(tmp_path)
+    set_path = _mini_set_with_result(tmp_path)
+    rc = run.main(["score-set", str(set_path), "--runs-dir", "runs", "--emit-entry", "e"])
+    assert rc == 2
+    assert not (tmp_path / "leaderboard" / "entries" / "e.json").exists()
+
+
+def test_score_set_emit_unknown_setup_fails(tmp_path, monkeypatch):
+    monkeypatch.chdir(tmp_path)
+    set_path = _mini_set_with_result(tmp_path)
+    rc = run.main(["score-set", str(set_path), "--runs-dir", "runs",
+                   "--setup", "does-not-exist", "--emit-entry", "e"])
+    assert rc == 2
+    assert not (tmp_path / "leaderboard" / "entries" / "e.json").exists()
 
 
 # --- grade layer + failure tags (Claude grading spec) -------------------------
