@@ -549,6 +549,37 @@
 
   /* =====================================================  LEADERBOARD  ==== */
 
+  const LEADERBOARD_SETS = [
+    { id: "all", label: "All" },
+    { id: "core", label: "Core" },
+    { id: "hard", label: "Hard" }
+  ];
+  let leaderboardSetFilter = "all";
+
+  function normalizeLeaderboardSetFilter(id) {
+    return LEADERBOARD_SETS.some((s) => s.id === id) ? id : "all";
+  }
+
+  function leaderboardSetLabel(id) {
+    const match = LEADERBOARD_SETS.find((s) => s.id === id);
+    return match ? match.label : (id || "unknown");
+  }
+
+  function leaderboardSetTabs(entries) {
+    const counts = { all: entries.length, core: 0, hard: 0 };
+    entries.forEach(function (e) {
+      if (e.set_id === "core" || e.set_id === "hard") counts[e.set_id] += 1;
+    });
+
+    return `<div class="cat-filters lb-set-tabs" id="leaderboard-set-tabs" aria-label="Eval set filter">
+      ${LEADERBOARD_SETS.map(function (set) {
+        const active = leaderboardSetFilter === set.id;
+        const style = active ? 'style="background:var(--accent)"' : "";
+        return `<button class="${active ? "active" : ""}" data-set="${esc(set.id)}" aria-pressed="${active ? "true" : "false"}" ${style}>${esc(set.label)} <span class="chip">${esc(counts[set.id] || 0)}</span></button>`;
+      }).join("")}
+    </div>`;
+  }
+
   function gradeClassFor(label) {
     switch (label) {
       case "Clean pass": return "g-clean";
@@ -637,6 +668,11 @@
     // Optional filter by setup (used by the "Used in N runs" link).
     const activeSetup = setupFilter ? findSetup(setupFilter) : null;
     if (setupFilter) entries = entries.filter((e) => e.setup_id === setupFilter);
+    leaderboardSetFilter = normalizeLeaderboardSetFilter(leaderboardSetFilter);
+    const setTabs = leaderboardSetTabs(entries);
+    if (leaderboardSetFilter !== "all") {
+      entries = entries.filter((e) => e.set_id === leaderboardSetFilter);
+    }
 
     // Sort: clean rows (unsafe === 0) first, then by pass-rate desc.
     // Any row with unsafe > 0 sinks below all clean rows regardless of rate.
@@ -651,6 +687,7 @@
       const displayRank = i + 1;
       const flagged = (e.unsafe || 0) > 0;
       const pct = Math.round((e.weighted_pass_rate || 0) * 100);
+      const setLabel = leaderboardSetLabel(e.set_id);
       const setup = findSetup(e.setup_id);
       // Link only when the setup actually exists; show a known-but-missing id as
       // muted text, and an absent id as a plain dash (never a link to nowhere).
@@ -671,7 +708,7 @@
         : "";
       const gradeCell = `<div class="grade-cell"><span class="grade-badge ${gradeClassFor(gradeLabel)}">${esc(gradeLabel)}</span>${gradeScore}</div>${gradeTags}`;
 
-      return `<tr class="${flagged ? "flagged" : ""}">
+      return `<tr class="${flagged ? "flagged" : ""}" data-set="${esc(e.set_id || "")}">
         <td>
           <div class="rank-cell"><span class="rank-num ${displayRank === 1 && !flagged ? "top" : ""}">${displayRank}</span></div>
         </td>
@@ -681,6 +718,7 @@
             <div class="a-model">${e.model ? esc(e.model) : "no model"}</div>
           </div>
         </td>
+        <td><span class="chip">${esc(setLabel)}</span></td>
         <td class="num">
           <div class="passrate"><span class="bar"><i style="width:${pct}%"></i></span><span class="pct">${pct}%</span></div>
         </td>
@@ -689,7 +727,7 @@
         <td class="num tokens-cell">${fmtInt(e.tokens_total)}${sr}</td>
         <td>${setupCell}</td>
       </tr>`;
-    }).join("");
+    }).join("") || `<tr><td colspan="8">${emptyState("No matching results", "Try a different eval set filter.")}</td></tr>`;
 
     const filterNote = activeSetup
       ? `<div class="lb-caveat" style="background:var(--accent-soft);border-color:var(--accent-line);color:var(--accent-ink)">
@@ -706,6 +744,7 @@
         <span><b>Correctness is scorer-computed</b> (we ran the tests). Tokens, time, and cost may be
           <b>self-reported</b> by whoever submitted the run — look for the badge.</span>
       </div>
+      ${setTabs}
       <div class="panel" style="padding:6px 4px">
         <div class="lb-table-wrap">
           <table class="lb">
@@ -713,6 +752,7 @@
               <tr>
                 <th style="width:64px">Rank</th>
                 <th>Agent</th>
+                <th>Eval set</th>
                 <th class="num">Weighted pass-rate</th>
                 <th>Grade</th>
                 <th>Unsafe</th>
@@ -724,7 +764,7 @@
           </table>
         </div>
       </div>
-      ${setupFilter ? "" : renderOpenAISamples()}
+      ${setupFilter || leaderboardSetFilter !== "all" ? "" : renderOpenAISamples()}
     </div>`;
   }
 
@@ -862,6 +902,14 @@ setups/&lt;name&gt;/<br>
       return;
     }
 
+    // Leaderboard eval-set filter.
+    const lbSetBtn = t.closest("#leaderboard-set-tabs [data-set]");
+    if (lbSetBtn) {
+      leaderboardSetFilter = normalizeLeaderboardSetFilter(lbSetBtn.getAttribute("data-set"));
+      refreshLeaderboard();
+      return;
+    }
+
     // Challenge category filter.
     const catBtn = t.closest("#cat-filters [data-cat]");
     if (catBtn) {
@@ -888,6 +936,13 @@ setups/&lt;name&gt;/<br>
       input.focus();
       input.setSelectionRange(input.value.length, input.value.length);
     }
+  }
+
+  function refreshLeaderboard() {
+    const parsed = parseHash();
+    app().innerHTML = viewLeaderboard(parsed.query.setup || null);
+    const active = document.querySelector("#leaderboard-set-tabs [aria-pressed='true']");
+    if (active) active.focus();
   }
 
   // Close modal on Escape.
