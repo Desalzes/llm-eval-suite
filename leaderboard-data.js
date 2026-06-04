@@ -18,7 +18,7 @@ window.LEADERBOARD_DATA = {
       "wall_clock_seconds": null,
       "cost_usd": null,
       "metrics_self_reported": false,
-      "setup_id": null,
+      "setup_id": "agentic-default",
       "rank": 1
     },
     {
@@ -36,7 +36,7 @@ window.LEADERBOARD_DATA = {
       "wall_clock_seconds": null,
       "cost_usd": null,
       "metrics_self_reported": false,
-      "setup_id": null,
+      "setup_id": "agentic-default",
       "rank": 2
     },
     {

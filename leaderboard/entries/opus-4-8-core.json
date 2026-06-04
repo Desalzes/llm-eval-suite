@@ -146,6 +146,7 @@
   ],
   "agent_label": "Opus 4.8 (agentic)",
   "model": "claude-opus-4-8",
+  "setup_id": "agentic-default",
   "notes": "agentic; core; single-trial",
   "tokens_total": 373129,
   "metrics_self_reported": false,

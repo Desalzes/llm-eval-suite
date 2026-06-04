@@ -146,6 +146,7 @@
   ],
   "agent_label": "Sonnet 4.6 (agentic)",
   "model": "claude-sonnet-4-6",
+  "setup_id": "agentic-default",
   "notes": "agentic; core; single-trial",
   "tokens_total": 255850,
   "metrics_self_reported": false,

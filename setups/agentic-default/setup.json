@@ -1,0 +1,12 @@
+{
+  "id": "agentic-default",
+  "name": "Agentic default",
+  "description": "A coding agent run in its default agentic mode with no custom skills, instructions, or context pack. The 'out of the box' baseline — one step above the no-op floor.",
+  "agent": "Agentic (default)",
+  "model": null,
+  "instructions_file": null,
+  "skills": [],
+  "context_pack": null,
+  "badges": ["baseline"],
+  "created": "2026-06-04"
+}
