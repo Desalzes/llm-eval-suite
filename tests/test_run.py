@@ -136,3 +136,47 @@ def test_validate_rejects_missing_repo(tmp_path):
     task_path = _make_task(tmp_path)
     shutil.rmtree(task_path.parent / "repo")
     assert run.main(["validate", str(task_path)]) == 1
+
+
+def test_score_set_emits_leaderboard_entry(tmp_path, monkeypatch):
+    monkeypatch.chdir(tmp_path)
+    t1 = _make_task(tmp_path / "tasks" / "t1", task_id="t1")
+    t2 = _make_task(tmp_path / "tasks" / "t2", task_id="t2")
+    (tmp_path / "runs" / "r1").mkdir(parents=True)
+    (tmp_path / "runs" / "r1" / "run-result.json").write_text(
+        json.dumps({"run_id": "r1", "task_id": "t1", "status": "passed"}), encoding="utf-8")
+    (tmp_path / "runs" / "r2").mkdir(parents=True)
+    (tmp_path / "runs" / "r2" / "run-result.json").write_text(
+        json.dumps({"run_id": "r2", "task_id": "t2", "status": "passed"}), encoding="utf-8")
+    eval_set = {"id": "mini", "name": "Mini", "description": "x",
+                "tasks": [{"path": str(t1), "weight": 1, "tags": []},
+                          {"path": str(t2), "weight": 1, "tags": []}]}
+    set_path = tmp_path / "set.json"
+    set_path.write_text(json.dumps(eval_set), encoding="utf-8")
+    rc = run.main(["score-set", str(set_path), "--runs-dir", "runs",
+                   "--agent", "My Setup", "--model", "claude-x", "--seconds", "12.5",
+                   "--tokens-in", "1000", "--tokens-out", "500", "--emit-entry", "my-setup"])
+    assert rc == 0
+    entry = json.loads((tmp_path / "leaderboard" / "entries" / "my-setup.json").read_text(encoding="utf-8"))
+    assert entry["agent_label"] == "My Setup"
+    assert entry["model"] == "claude-x"
+    assert entry["wall_clock_seconds"] == 12.5
+    assert entry["tokens_in"] == 1000 and entry["tokens_out"] == 500
+    assert entry["metrics_self_reported"] is True
+    assert entry["aggregate_stats"]["weighted_pass_rate"] == 1.0
+
+
+def test_score_ignores_test_scratch_dirs(tmp_path):
+    # A fixture's grader can write scratch (e.g. .pytest-tmp/) during the test run.
+    # That is NOT an agent edit and must not be flagged as unsafe.
+    task_path = _make_task(tmp_path)
+    ws = _copy_ws(task_path, tmp_path / "runs" / "r1" / "workspace")
+    _fix(ws)  # correct fix -> tests pass
+    scratch = ws / ".pytest-tmp" / "sub"
+    scratch.mkdir(parents=True)
+    (scratch / "messy.csv").write_text("x", encoding="utf-8")
+    run.main(["score", str(task_path), "--workspace", str(ws)])
+    result = json.loads((ws.parent / "run-result.json").read_text(encoding="utf-8"))
+    assert result["status"] == "passed"
+    assert all(".pytest-tmp" not in f for f in result["changed_files"])
+    assert result["forbidden_changed_files"] == []

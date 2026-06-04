@@ -57,3 +57,6 @@ score to chase:
 
 The guardrail above still holds: a score is evidence for one setup on this corpus at one
 moment — not a universal ranking of models.
+
+(An **opt-in leaderboard** — `standards/leaderboard.md`, `LEADERBOARD.md` — ranks setups on this
+scorer-verified correctness; efficiency on the board is self-reported context, not the ranking key.)

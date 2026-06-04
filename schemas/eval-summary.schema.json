@@ -25,7 +25,17 @@
     "runs": {
       "type": "array",
       "items": { "type": "object" }
-    }
+    },
+    "agent_label": { "type": "string" },
+    "model": { "type": "string" },
+    "wall_clock_seconds": { "type": "number" },
+    "tokens_in": { "type": "integer" },
+    "tokens_out": { "type": "integer" },
+    "tokens_total": { "type": "integer" },
+    "cost_usd": { "type": "number" },
+    "metrics_self_reported": { "type": "boolean" },
+    "submitted_by": { "type": "string" },
+    "notes": { "type": "string" }
   },
   "additionalProperties": true
 }

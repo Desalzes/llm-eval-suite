@@ -1,0 +1,30 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>LLM Eval Suite — Leaderboard</title>
+    <link rel="stylesheet" href="styles.css">
+  </head>
+  <body>
+    <main class="atlas-shell">
+      <section class="workspace" aria-label="Leaderboard">
+        <header class="topbar">
+          <div>
+            <p class="section-label">Community Board</p>
+            <h2>How AI coding setups score</h2>
+          </div>
+          <a class="eval-item" href="index.html"><span>← Back to atlas</span></a>
+        </header>
+        <p id="board-caveat" class="detail-empty">
+          Ranked by weighted pass-rate on this corpus. Efficiency (tokens / time) is
+          <strong>self-reported and unverified</strong>, and depends on provider, hardware, and price —
+          it is shown as context, not used for ranking. Small corpus; evidence on one corpus, not a universal model ranking.
+        </p>
+        <section id="leaderboard-table" class="leaderboard-table" aria-label="Ranked entries"></section>
+      </section>
+    </main>
+    <script src="leaderboard-data.js"></script>
+    <script src="leaderboard.js"></script>
+  </body>
+</html>

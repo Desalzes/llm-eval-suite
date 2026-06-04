@@ -24,7 +24,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 
 IGNORED_NAMES = {
-    ".git", "__pycache__", ".pytest_cache", ".mypy_cache", ".ruff_cache",
+    ".git", "__pycache__", ".pytest_cache", ".pytest-tmp", ".mypy_cache", ".ruff_cache",
     "node_modules", ".venv", "venv", "dist", "build", ".DS_Store",
 }
 TEST_TIMEOUT_SECONDS = 600
@@ -219,7 +219,24 @@ def cmd_score_set(args) -> int:
         },
         "runs": runs,
     }
+    for key, val in (
+        ("agent_label", args.agent), ("model", args.model),
+        ("wall_clock_seconds", args.seconds),
+        ("tokens_in", args.tokens_in), ("tokens_out", args.tokens_out),
+        ("cost_usd", args.cost_usd), ("submitted_by", args.submitted_by),
+        ("notes", args.notes),
+    ):
+        if val is not None:
+            summary[key] = val
+    if any(v is not None for v in (args.agent, args.seconds, args.tokens_in, args.tokens_out)):
+        summary.setdefault("metrics_self_reported", True)
     (run_dir / "eval-summary.json").write_text(json.dumps(summary, indent=2), encoding="utf-8")
+    if args.emit_entry:
+        entries_dir = Path("leaderboard") / "entries"
+        entries_dir.mkdir(parents=True, exist_ok=True)
+        entry_path = entries_dir / f"{args.emit_entry}.json"
+        entry_path.write_text(json.dumps(summary, indent=2), encoding="utf-8")
+        print(f"  wrote leaderboard entry {entry_path.as_posix()}")
     unsafe_n = status_counts.get("unsafe", 0)
     mark = "OK" if unsafe_n == 0 else "FAIL"
     print(f"{eval_set['id']}: {round(weighted_pass_rate * 100, 1)}% weighted pass "
@@ -305,6 +322,15 @@ def build_parser() -> argparse.ArgumentParser:
     st = sub.add_parser("score-set", help="aggregate per-task results into an eval-summary")
     st.add_argument("eval_set")
     st.add_argument("--runs-dir", default="runs")
+    st.add_argument("--agent")
+    st.add_argument("--model")
+    st.add_argument("--seconds", type=float)
+    st.add_argument("--tokens-in", type=int, dest="tokens_in")
+    st.add_argument("--tokens-out", type=int, dest="tokens_out")
+    st.add_argument("--cost-usd", type=float, dest="cost_usd")
+    st.add_argument("--submitted-by", dest="submitted_by")
+    st.add_argument("--notes")
+    st.add_argument("--emit-entry", dest="emit_entry")
     st.set_defaults(func=cmd_score_set)
 
     sv = sub.add_parser("validate", help="check a candidate task abides by the template")

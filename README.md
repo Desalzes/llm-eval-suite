@@ -76,6 +76,7 @@ challenge, its category, and how it's scored.
 - `tasks/community/` — community-submitted challenges (not yet in the official sets).
 - `tasks/eval-sets/` — curated bundles (`smoke`, `core`, `innovation`) with weights.
 - `tasks/template/` — the copy-me skeleton for new challenges.
+- `leaderboard.html` + `LEADERBOARD.md` — the community leaderboard (opt-in; submit your setup's score).
 - `schemas/` — the JSON-Schema contracts (`task`, `eval-set`, `run-result`, `eval-summary`, …).
 - `standards/` — the task format and scoring rules.
 - `context-packs/` — optional example agent configs (not needed to play).
