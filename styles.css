@@ -35,7 +35,7 @@
   /* Status */
   --pass:   #117733;
   --fail:   #b4453a;
-  --unsafe: #cc6677;
+  --unsafe: #7c3aed;
 
   /* Shape */
   --radius:   10px;
@@ -469,8 +469,8 @@ table.lb thead th.num, table.lb tbody td.num { text-align: right; }
 table.lb tbody td { padding: 14px; border-bottom: 1px solid var(--border); vertical-align: middle; }
 table.lb tbody tr:last-child td { border-bottom: 0; }
 table.lb tbody tr:hover { background: var(--panel-2); }
-table.lb tbody tr.flagged { background: #fdf3f4; }
-table.lb tbody tr.flagged:hover { background: #fbecee; }
+table.lb tbody tr.flagged { background: #f6f3fe; }
+table.lb tbody tr.flagged:hover { background: #efeafc; }
 
 .rank-cell { display: flex; align-items: center; gap: 10px; }
 .rank-num {
@@ -491,7 +491,7 @@ table.lb tbody tr.flagged:hover { background: #fbecee; }
 .unsafe-cell.hit { color: var(--unsafe); }
 .unsafe-cell .flag-pill {
   display: inline-flex; align-items: center; gap: 5px; font-size: 11.5px; font-weight: 650;
-  color: var(--unsafe); background: #fbe9eb; border: 1px solid #f2cdd2; border-radius: 999px; padding: 3px 8px;
+  color: var(--unsafe); background: #f3eefe; border: 1px solid #ddd0f7; border-radius: 999px; padding: 3px 8px;
 }
 .tokens-cell { font-variant-numeric: tabular-nums; color: var(--ink-2); }
 .setup-link { font-weight: 600; font-size: 13.5px; }
@@ -508,13 +508,57 @@ table.lb tbody tr.flagged:hover { background: #fbecee; }
 .grade-badge.g-clean      { color: var(--pass);       background: #e9f3ec; border-color: #c5e2cf; }
 .grade-badge.g-useful     { color: var(--accent-ink); background: var(--accent-soft); border-color: var(--accent-line); }
 .grade-badge.g-needs      { color: #9a6b12;           background: #faf1dd; border-color: #ecd9ab; }
-.grade-badge.g-unsafe     { color: var(--unsafe);     background: #fbe9eb; border-color: #f2cdd2; }
+.grade-badge.g-unsafe     { color: var(--unsafe);     background: #f3eefe; border-color: #ddd0f7; }
 .grade-badge.g-incomplete { color: var(--ink-2);      background: #eef0f2; border-color: var(--border-2); }
 .grade-score { font-variant-numeric: tabular-nums; font-size: 12px; font-weight: 650; color: var(--ink-3); }
 .grade-tags { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 6px; }
 .grade-tags .ftag {
   font-family: var(--mono); font-size: 10px; font-weight: 600; color: var(--ink-2);
   background: var(--panel-2); border: 1px solid var(--border); border-radius: 5px; padding: 1px 5px;
+}
+
+.diag-samples { margin-top: 26px; }
+.diag-head {
+  display: flex; align-items: flex-end; justify-content: space-between; gap: 14px;
+  margin-bottom: 12px;
+}
+.diag-head h2 { font-size: 22px; letter-spacing: 0; }
+.diag-runner {
+  font-family: var(--mono); font-size: 11.5px; color: var(--ink-3);
+  border: 1px solid var(--border); background: var(--panel-2); border-radius: 7px; padding: 5px 8px;
+}
+.diag-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; }
+.diag-card {
+  border: 1px solid var(--border); border-radius: var(--radius); background: var(--panel);
+  overflow: hidden; box-shadow: var(--shadow-sm);
+}
+.diag-card-head {
+  display: flex; align-items: flex-start; justify-content: space-between; gap: 12px;
+  padding: 16px 16px 12px; border-bottom: 1px solid var(--border);
+}
+.diag-card-head h2 { font-size: 17px; letter-spacing: 0; }
+.diag-kicker {
+  font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .06em;
+  color: var(--ink-3); margin-bottom: 4px;
+}
+.diag-source { padding: 11px 16px; color: var(--ink-2); font-size: 13px; background: var(--panel-2); border-bottom: 1px solid var(--border); }
+.diag-table-wrap { overflow-x: auto; }
+.diag-table { width: 100%; min-width: 560px; border-collapse: collapse; font-size: 13.5px; }
+.diag-table th {
+  text-align: left; font-size: 11px; text-transform: uppercase; letter-spacing: .05em;
+  color: var(--ink-3); font-weight: 700; padding: 10px 14px; border-bottom: 1px solid var(--border-2);
+}
+.diag-table th.num, .diag-table td.num { text-align: right; }
+.diag-table td { padding: 13px 14px; border-bottom: 1px solid var(--border); vertical-align: middle; }
+.diag-table tbody tr:last-child td { border-bottom: 0; }
+.diag-weight { font-variant-numeric: tabular-nums; font-weight: 700; color: var(--ink-2); }
+.diag-tasks {
+  display: flex; flex-wrap: wrap; gap: 6px; padding: 12px 16px 15px;
+  border-top: 1px solid var(--border); background: var(--panel-2);
+}
+.diag-task {
+  font-family: var(--mono); font-size: 10.5px; color: var(--ink-2);
+  border: 1px solid var(--border); border-radius: 6px; padding: 3px 6px; background: var(--panel);
 }
 
 /* =============================================================  MODAL  ==== */
