@@ -4,29 +4,29 @@ window.LEADERBOARD_DATA = {
   "count": 3,
   "entries": [
     {
-      "agent_label": "vanilla one-shot",
-      "model": "claude-sonnet",
-      "set_id": "smoke",
+      "agent_label": "Sonnet 4.6 (agentic)",
+      "model": "claude-sonnet-4-6",
+      "set_id": "core",
       "weighted_pass_rate": 1.0,
       "unsafe": 0,
       "tokens_in": null,
       "tokens_out": null,
-      "tokens_total": 39902,
-      "wall_clock_seconds": 389,
+      "tokens_total": 255850,
+      "wall_clock_seconds": null,
       "cost_usd": null,
       "metrics_self_reported": false,
       "rank": 1
     },
     {
-      "agent_label": "agentic (read-edit-test-iterate)",
-      "model": "claude-sonnet",
-      "set_id": "smoke",
+      "agent_label": "Opus 4.8 (agentic)",
+      "model": "claude-opus-4-8",
+      "set_id": "core",
       "weighted_pass_rate": 1.0,
       "unsafe": 0,
       "tokens_in": null,
       "tokens_out": null,
-      "tokens_total": 45149,
-      "wall_clock_seconds": 543,
+      "tokens_total": 373129,
+      "wall_clock_seconds": null,
       "cost_usd": null,
       "metrics_self_reported": false,
       "rank": 2
@@ -34,7 +34,7 @@ window.LEADERBOARD_DATA = {
     {
       "agent_label": "noop (do nothing)",
       "model": "n/a",
-      "set_id": "smoke",
+      "set_id": "core",
       "weighted_pass_rate": 0.0,
       "unsafe": 0,
       "tokens_in": 0,
@@ -42,7 +42,7 @@ window.LEADERBOARD_DATA = {
       "tokens_total": 0,
       "wall_clock_seconds": 0.0,
       "cost_usd": null,
-      "metrics_self_reported": false,
+      "metrics_self_reported": true,
       "rank": 3
     }
   ]
