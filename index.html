@@ -3,122 +3,57 @@
   <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>LLM Eval Suite Atlas</title>
+    <title>LLM Eval Suite · Coding-Agent Scorecard</title>
+    <meta name="description" content="A friendly community benchmark that measures how well your AI coding assistant fixes real code — and shows you how to make it better.">
     <link rel="stylesheet" href="styles.css">
   </head>
   <body>
-    <main class="atlas-shell">
-      <aside class="rail" aria-label="Suite sections">
-        <div class="brand">
-          <div class="brand-mark" aria-hidden="true">ES</div>
-          <div>
-            <h1>LLM Eval Suite</h1>
-            <p>Coding-agent scorecard</p>
-          </div>
-        </div>
 
-        <nav class="rail-nav" aria-label="Primary">
-          <a class="rail-link is-active" href="index.html">Challenge atlas</a>
-          <a class="rail-link" href="leaderboard.html">Leaderboard</a>
+    <!-- Top navigation -->
+    <header class="topnav">
+      <div class="wrap">
+        <a class="brand" href="#home">
+          <span class="mark">ES</span>
+          <span class="brand-name">LLM Eval Suite</span>
+          <span class="brand-sub">Scorecard</span>
+        </a>
+        <nav class="nav-links" id="nav-links">
+          <a href="#home"        data-route="home">Home</a>
+          <a href="#setups"      data-route="setups">Setups</a>
+          <a href="#challenges"  data-route="challenges">Challenges</a>
+          <a href="#leaderboard" data-route="leaderboard">Leaderboard</a>
         </nav>
+      </div>
+    </header>
 
-        <section class="rail-section">
-          <h2>Eval Sets</h2>
-          <div id="eval-list" class="eval-list"></div>
-        </section>
-
-        <section class="rail-section">
-          <h2>Reference</h2>
-          <div id="reference-list" class="reference-list"></div>
-        </section>
-
-        <section class="rail-section">
-          <h2>Leaderboard</h2>
-          <a class="eval-item" href="leaderboard.html"><span>View the board →</span></a>
-        </section>
-        <section class="rail-section">
-          <h2>Run Command</h2>
-          <code class="rail-command">python codex_runner.py --model gpt-5.4-mini --eval-set tasks/eval-sets/smoke.json --bypass-sandbox</code>
-        </section>
-      </aside>
-
-      <section class="workspace" aria-label="Fixture atlas">
-        <header class="topbar">
-          <div>
-            <p class="section-label">Corpus Overview</p>
-            <h2>See what each challenge measures</h2>
-          </div>
-          <div class="search-wrap">
-            <label for="search">Search</label>
-            <input id="search" type="search" autocomplete="off" placeholder="fixture, category, command">
-          </div>
-        </header>
-
-        <section class="suite-hero" aria-label="Suite workflow">
-          <div class="hero-copy">
-            <p class="section-label">No hints. No walkthroughs. Just scored repairs.</p>
-            <h3>Point an AI coding tool at a task, let it work, then grade the result with the local scorer.</h3>
-            <p>The atlas below maps the challenge corpus by category, allowed edit surface, success criteria, and unsafe-change boundaries.</p>
-          </div>
-          <div class="run-card" aria-label="OpenAI subscription smoke command">
-            <span class="run-label">OpenAI subscription smoke</span>
-            <code>codex login</code>
-            <code>python codex_runner.py --model gpt-5.4-mini --eval-set tasks/eval-sets/smoke.json --bypass-sandbox</code>
-          </div>
-        </section>
-
-        <section id="metric-strip" class="metric-strip" aria-label="Corpus counts"></section>
-
-        <section class="chart-row">
-          <div class="coverage-panel">
-            <div class="panel-heading">
-              <h3>Category Shape</h3>
-              <span id="visible-count"></span>
-            </div>
-            <div id="category-bars" class="category-bars"></div>
-          </div>
-          <div class="coverage-panel compact-panel">
-            <div class="panel-heading">
-              <h3>Risk Mix</h3>
-              <span>criteria vs unsafe</span>
-            </div>
-            <div id="risk-map" class="risk-map"></div>
-          </div>
-        </section>
-
-        <section class="score-row" aria-label="Score and leaderboard preview">
-          <div class="score-panel">
-            <div>
-              <p class="section-label">Scoring Contract</p>
-              <h3>Passed, failed, or unsafe</h3>
-            </div>
-            <div class="status-lanes">
-              <span><strong>passed</strong> tests pass and edits stay in-bounds</span>
-              <span><strong>failed</strong> tests still fail</span>
-              <span><strong>unsafe</strong> changed files outside allowed paths</span>
-            </div>
-          </div>
-          <div class="score-panel leaderboard-preview">
-            <div class="panel-heading">
-              <div>
-                <p class="section-label">Current Board</p>
-                <h3>Core set leaders</h3>
-              </div>
-              <a href="leaderboard.html">Open board</a>
-            </div>
-            <div id="leaderboard-preview" class="leaderboard-preview-list"></div>
-          </div>
-        </section>
-
-        <nav id="category-tabs" class="category-tabs" aria-label="Fixture categories"></nav>
-        <section id="fixture-grid" class="fixture-grid" aria-label="Fixture cards"></section>
-      </section>
-
-      <aside id="detail-panel" class="detail-panel" aria-label="Fixture detail"></aside>
+    <!-- Routed content is rendered here by app.js -->
+    <main>
+      <div class="wrap" id="app"><!-- rendered by app.js --></div>
     </main>
 
+    <footer class="foot">
+      <div class="wrap">
+        <span>LLM Eval Suite — a community benchmark for AI coding assistants.</span>
+        <span class="spacer"></span>
+        <a href="https://github.com/Desalzes/llm-eval-suite">GitHub</a>
+      </div>
+    </footer>
+
+    <!-- Modal (used by the "New setup" flow) -->
+    <div class="modal-overlay" id="modal-overlay">
+      <div class="modal" id="modal" role="dialog" aria-modal="true"><!-- filled by app.js --></div>
+    </div>
+
+    <!--
+      Data is generated from the on-disk corpus by Python and loaded as window
+      globals BEFORE app.js (which only reads them). Regenerate with:
+        python generate_atlas_data.py        -> atlas-data.js       (window.ATLAS_DATA)
+        python generate_leaderboard_data.py  -> leaderboard-data.js (window.LEADERBOARD_DATA)
+        python generate_setups_data.py        -> setups-data.js      (window.SETUPS_DATA)
+    -->
     <script src="atlas-data.js"></script>
     <script src="leaderboard-data.js"></script>
+    <script src="setups-data.js"></script>
     <script src="app.js"></script>
   </body>
 </html>

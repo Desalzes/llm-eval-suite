@@ -1,57 +1,48 @@
-"""Static wiring checks for the visual atlas.
+"""Static wiring checks for the single-page scorecard app.
 
-Counts/fixtures live in the generated atlas-data.js (see generate_atlas_data.py
-and test_generate_atlas_data.py for the data-correctness checks). These tests
-only assert the page is wired together correctly and renders from the generated
-data rather than hand-maintained literals.
+Data correctness lives in the generated *-data.js (see test_generate_atlas_data.py
+for atlas data and test_setups.py for setups data). These tests only assert the
+page is wired together and renders from the generated globals, not from literals.
 """
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 
 
-def test_visual_atlas_static_files_exist_and_wire_core_regions():
-    index = ROOT / "index.html"
-    assert index.exists()
-    assert (ROOT / "styles.css").exists()
-    assert (ROOT / "app.js").exists()
-    assert (ROOT / "codex_runner.py").exists()
-    assert (ROOT / "atlas-data.js").exists()
-    assert (ROOT / "leaderboard-data.js").exists()
-
-    html = index.read_text(encoding="utf-8")
-    assert '<main class="atlas-shell">' in html
-    assert 'id="fixture-grid"' in html
-    assert 'id="detail-panel"' in html
-    assert 'id="reference-list"' in html
-    assert 'id="leaderboard-preview"' in html
-    assert "codex_runner.py" in html
-
-    # The generated data must load before the app script that consumes it.
-    assert 'src="atlas-data.js"' in html
-    assert 'src="leaderboard-data.js"' in html
-    assert 'src="app.js"' in html
-    assert html.index('atlas-data.js') < html.index('app.js')
-    assert html.index('leaderboard-data.js') < html.index('app.js')
+def test_static_files_exist():
+    for name in ["index.html", "styles.css", "app.js",
+                 "atlas-data.js", "leaderboard-data.js", "setups-data.js"]:
+        assert (ROOT / name).exists(), f"missing {name}"
 
 
-def test_app_renders_from_generated_data_not_hardcoded():
+def test_index_wires_core_regions_and_data_order():
+    html = (ROOT / "index.html").read_text(encoding="utf-8")
+    # mount points the app needs
+    assert 'id="app"' in html
+    assert 'id="nav-links"' in html
+    assert 'id="modal"' in html
+    # the four routes are linked in the nav
+    for route in ["#home", "#setups", "#challenges", "#leaderboard"]:
+        assert route in html
+    # the three data globals load BEFORE app.js (use the script src= form so the
+    # header comment that names these files doesn't confuse the ordering check)
+    for datafile in ["atlas-data.js", "leaderboard-data.js", "setups-data.js"]:
+        assert f'src="{datafile}"' in html
+        assert html.index(f'src="{datafile}"') < html.index('src="app.js"')
+
+
+def test_app_reads_generated_globals_not_hardcoded():
     app = (ROOT / "app.js").read_text(encoding="utf-8")
-    assert "window.ATLAS_DATA" in app
-    assert "window.LEADERBOARD_DATA" in app
-    # The fixture corpus is no longer hand-maintained inside app.js.
+    for g in ["window.ATLAS_DATA", "window.LEADERBOARD_DATA", "window.SETUPS_DATA"]:
+        assert g in app
+    # the corpus is not hand-maintained inside app.js
     assert "const fixtures = [" not in app
 
 
-def test_atlas_data_defines_window_global_with_core_keys():
-    data = (ROOT / "atlas-data.js").read_text(encoding="utf-8")
-    assert data.startswith("// AUTO-GENERATED")
-    assert "window.ATLAS_DATA = " in data
-    for key in ['"summary"', '"categories"', '"palette"', '"evalSets"', '"fixtures"']:
-        assert key in data
-
-
-def test_atlas_data_includes_expected_categories():
-    data = (ROOT / "atlas-data.js").read_text(encoding="utf-8")
-    for category in ["Bugfix", "Policy", "Safety", "Skill", "Frontend", "Innovation"]:
-        assert f'"{category}"' in data
+def test_data_files_define_window_globals():
+    for name, g in [("atlas-data.js", "window.ATLAS_DATA = "),
+                    ("leaderboard-data.js", "window.LEADERBOARD_DATA = "),
+                    ("setups-data.js", "window.SETUPS_DATA = ")]:
+        text = (ROOT / name).read_text(encoding="utf-8")
+        assert text.startswith("// AUTO-GENERATED")
+        assert g in text

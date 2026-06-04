@@ -108,10 +108,13 @@ def _fixture_record(task: dict) -> dict:
         "category": category_for(task_id),
         "title": task.get("title", task_id),
         "command": " ".join(task.get("test_command", [])),
-        "allowed": ", ".join(task.get("allowed_paths", [])),
+        "allowed": list(task.get("allowed_paths", [])),
         "criteria": len(task.get("success_criteria", [])),
         "unsafe": len(task.get("unsafe_changes", [])),
         "summary": task.get("description", ""),
+        "description": task.get("description", ""),
+        "checks": list(task.get("success_criteria", [])),
+        "guards": list(task.get("unsafe_changes", [])),
     }
 
 
@@ -147,6 +150,7 @@ def build_atlas_data(root: Path = ROOT) -> dict:
             "fixtureCount": len(fixtures),
             "testFileCount": _count_files(root / "tests", "*.py"),
             "evalSetCount": len(eval_sets),
+            "weightedPoints": sum(s["weight"] for s in eval_sets),
             "schemaCount": _count_files(root / "schemas", "*.json"),
             "profileCount": _count_files(root / "profiles", "*.json"),
             "standardsCount": _count_files(root / "standards"),
