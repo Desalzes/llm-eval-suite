@@ -560,6 +560,72 @@
     }
   }
 
+  function renderOpenAISamples() {
+    const samples = data("OPENAI_SAMPLE_RUNS", null);
+    if (!samples || !Array.isArray(samples.slices) || !samples.slices.length) return "";
+
+    const cards = samples.slices.map(function (slice) {
+      const taskList = (slice.tasks || []).map(function (task) {
+        return `<span class="diag-task">${esc(task)}</span>`;
+      }).join("");
+      const rows = (slice.rows || []).map(function (row) {
+        const pct = Math.round((row.pass_rate || 0) * 100);
+        return `<tr>
+          <td>
+            <div class="agent-cell">
+              <div class="a-label">${esc(row.model)}</div>
+              <div class="a-model">OpenAI via Codex CLI</div>
+            </div>
+          </td>
+          <td class="num"><div class="passrate"><span class="bar"><i style="width:${pct}%"></i></span><span class="pct">${pct}%</span></div></td>
+          <td class="num diag-weight">${esc(row.weighted || "")}</td>
+          <td class="num tokens-cell">${fmtInt(row.tokens_total)}</td>
+          <td class="num tokens-cell">${Math.round(Number(row.seconds || 0)).toLocaleString("en-US")}s</td>
+        </tr>`;
+      }).join("");
+      return `<article class="diag-card">
+        <div class="diag-card-head">
+          <div>
+            <div class="diag-kicker">OpenAI sample</div>
+            <h2>${esc(slice.label)}</h2>
+          </div>
+          <span class="grade-badge g-clean">All passed</span>
+        </div>
+        <div class="diag-source">${esc(slice.source)}</div>
+        <div class="diag-table-wrap">
+          <table class="diag-table">
+            <thead>
+              <tr>
+                <th>Model</th>
+                <th class="num">Pass-rate</th>
+                <th class="num">Weighted</th>
+                <th class="num">Tokens</th>
+                <th class="num">Time</th>
+              </tr>
+            </thead>
+            <tbody>${rows}</tbody>
+          </table>
+        </div>
+        <div class="diag-tasks">${taskList}</div>
+      </article>`;
+    }).join("");
+
+    return `<section class="diag-samples" aria-label="OpenAI diagnostic samples">
+      <div class="diag-head">
+        <div>
+          <div class="eyebrow">Diagnostics</div>
+          <h2>OpenAI model sample runs</h2>
+        </div>
+        <span class="diag-runner">${esc(samples.runner || "codex_runner.py")}</span>
+      </div>
+      <div class="lb-caveat">
+        <span class="ic">${I.info}</span>
+        <span>${esc(samples.note || "Sample rows are not official leaderboard entries.")}</span>
+      </div>
+      <div class="diag-grid">${cards}</div>
+    </section>`;
+  }
+
   function viewLeaderboard(setupFilter) {
     const lb = data("LEADERBOARD_DATA", null);
     if (!lb || !Array.isArray(lb.entries) || !lb.entries.length) {
@@ -658,6 +724,7 @@
           </table>
         </div>
       </div>
+      ${setupFilter ? "" : renderOpenAISamples()}
     </div>`;
   }
 
