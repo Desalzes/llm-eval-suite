@@ -12,6 +12,26 @@ reflects *your* setup (your tool, your prompts, your config), not ours.
 - **Python 3** — [python.org/downloads](https://www.python.org/downloads/). The scorer is pure Python; there is nothing to `pip install`.
 - **An AI coding tool you already use** — Claude Code, Cursor, Aider, Copilot, etc.
 
+## Run with an OpenAI subscription
+
+If you have Codex CLI logged in through an OpenAI/ChatGPT subscription, use the optional
+subscription-backed runner. It does **not** use `OPENAI_API_KEY`; Codex CLI handles auth.
+
+```bash
+codex login
+python codex_runner.py --model gpt-5.4-mini --eval-set tasks/eval-sets/smoke.json
+```
+
+On Windows, if Codex reports a sandbox launch error, rerun with the explicit local-workspace
+escape hatch:
+
+```bash
+python codex_runner.py --model gpt-5.4-mini --eval-set tasks/eval-sets/smoke.json --bypass-sandbox
+```
+
+The runner prepares copied task workspaces under `runs/`, invokes `codex exec`, scores each
+workspace with `run.py`, and writes summaries under `output/codex-evals/`.
+
 ## Try it in 2 minutes
 
 1. **Get the files.** Use the green **Code → Download ZIP** button above and unzip it (or `git clone https://github.com/Desalzes/llm-eval-suite`).

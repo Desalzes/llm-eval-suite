@@ -35,6 +35,11 @@ input {
   font: inherit;
 }
 
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
 .atlas-shell {
   display: grid;
   grid-template-columns: 260px minmax(0, 1fr) 360px;
@@ -51,7 +56,30 @@ input {
   display: flex;
   align-items: center;
   gap: 12px;
-  margin-bottom: 34px;
+  margin-bottom: 20px;
+}
+
+.rail-nav {
+  display: grid;
+  gap: 8px;
+  margin-bottom: 28px;
+}
+
+.rail-link {
+  display: block;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--panel);
+  padding: 11px 12px;
+  color: var(--ink);
+  font-size: 13px;
+  font-weight: 750;
+}
+
+.rail-link:hover,
+.rail-link.is-active {
+  border-color: rgba(22, 124, 114, 0.45);
+  background: #eef7f4;
 }
 
 .brand-mark {
@@ -106,6 +134,18 @@ p {
   gap: 8px;
 }
 
+.rail-command {
+  display: block;
+  overflow-wrap: anywhere;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--panel);
+  padding: 12px;
+  color: var(--ink);
+  font-size: 12px;
+  line-height: 1.45;
+}
+
 .eval-item,
 .reference-list span {
   display: flex;
@@ -148,6 +188,65 @@ p {
   font-size: 34px;
   line-height: 1.05;
   letter-spacing: 0;
+}
+
+.suite-hero {
+  display: grid;
+  grid-template-columns: minmax(0, 1.25fr) minmax(280px, 0.75fr);
+  gap: 14px;
+  margin-bottom: 16px;
+}
+
+.hero-copy,
+.run-card {
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--panel);
+  padding: 18px;
+  box-shadow: 0 8px 22px rgba(32, 36, 38, 0.05);
+}
+
+.hero-copy h3 {
+  max-width: 760px;
+  margin-top: 8px;
+  font-size: 24px;
+  line-height: 1.12;
+}
+
+.hero-copy p:last-child {
+  max-width: 760px;
+  margin-top: 10px;
+  color: var(--muted);
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+.run-card {
+  display: grid;
+  align-content: start;
+  gap: 10px;
+  background: #202426;
+  color: white;
+}
+
+.run-label {
+  color: #a9bab5;
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0;
+  text-transform: uppercase;
+}
+
+.run-card code {
+  display: block;
+  overflow-wrap: anywhere;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: var(--radius);
+  background: rgba(255, 255, 255, 0.08);
+  padding: 10px;
+  color: #f7f4df;
+  font-size: 12px;
+  line-height: 1.45;
 }
 
 .search-wrap {
@@ -198,6 +297,85 @@ p {
   grid-template-columns: minmax(0, 1.35fr) minmax(240px, 0.65fr);
   gap: 14px;
   margin-bottom: 16px;
+}
+
+.score-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(280px, 0.82fr);
+  gap: 14px;
+  margin-bottom: 16px;
+}
+
+.score-panel {
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--panel);
+  padding: 16px;
+}
+
+.score-panel h3 {
+  margin-top: 4px;
+  font-size: 18px;
+}
+
+.status-lanes {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+  margin-top: 14px;
+}
+
+.status-lanes span {
+  min-height: 76px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--panel-soft);
+  padding: 12px;
+  color: var(--muted);
+  font-size: 13px;
+  line-height: 1.35;
+}
+
+.status-lanes strong {
+  display: block;
+  margin-bottom: 4px;
+  color: var(--ink);
+}
+
+.leaderboard-preview .panel-heading {
+  margin-bottom: 10px;
+}
+
+.leaderboard-preview .panel-heading a {
+  color: var(--teal);
+  font-size: 13px;
+  font-weight: 750;
+}
+
+.leaderboard-preview-list {
+  display: grid;
+  gap: 8px;
+}
+
+.leaderboard-mini-row {
+  display: grid;
+  grid-template-columns: 42px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 10px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  padding: 10px;
+  font-size: 13px;
+}
+
+.leaderboard-mini-row:hover {
+  border-color: rgba(22, 124, 114, 0.45);
+  background: #eef7f4;
+}
+
+.leaderboard-mini-row .rank {
+  color: var(--muted);
+  font-weight: 800;
 }
 
 .coverage-panel {
@@ -388,6 +566,7 @@ p {
 
 .detail-block code {
   display: block;
+  margin-top: 8px;
   overflow-wrap: anywhere;
   border: 1px solid rgba(255, 255, 255, 0.14);
   border-radius: var(--radius);
@@ -427,8 +606,12 @@ p {
   }
 
   .topbar,
-  .chart-row {
+  .chart-row,
+  .suite-hero,
+  .score-row,
+  .status-lanes {
     display: grid;
+    grid-template-columns: 1fr;
   }
 
   .metric-strip {

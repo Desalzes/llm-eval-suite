@@ -10,6 +10,7 @@ const categories = ATLAS.categories || ["All"];
 const palette = ATLAS.palette || {};
 const evalSets = ATLAS.evalSets || [];
 const fixtures = ATLAS.fixtures || [];
+const BOARD = window.LEADERBOARD_DATA || { entries: [] };
 
 let activeCategory = "All";
 let activeFixtureId = fixtures.length ? fixtures[0].id : null;
@@ -18,11 +19,12 @@ let activeEvalSet = evalSets.length ? evalSets[0].id : null;
 const byId = (id) => document.getElementById(id);
 
 function renderMetrics() {
+  const weightedPoints = evalSets.reduce((total, set) => total + (Number(set.weight) || 0), 0);
   const metrics = [
-    ["Fixtures", summary.fixtureCount],
-    ["Python Tests", summary.testFileCount],
+    ["Challenges", summary.fixtureCount],
+    ["Weighted Points", weightedPoints],
     ["Eval Sets", summary.evalSetCount],
-    ["Schemas", summary.schemaCount]
+    ["Board Entries", BOARD.entries.length]
   ];
   byId("metric-strip").innerHTML = metrics.map(([label, value]) => `
     <article class="metric">
@@ -51,7 +53,7 @@ function renderEvalSets() {
   byId("eval-list").innerHTML = evalSets.map((set) => `
     <button class="eval-item ${set.id === activeEvalSet ? "is-active" : ""}" data-eval="${set.id}">
       <span>${set.name}</span>
-      <strong>${set.tasks}</strong>
+      <strong>${set.tasks} / ${set.weight}</strong>
     </button>
   `).join("");
   document.querySelectorAll("[data-eval]").forEach((button) => {
@@ -60,6 +62,26 @@ function renderEvalSets() {
       renderEvalSets();
     });
   });
+}
+
+function pct(rate) {
+  return `${Math.round((Number(rate) || 0) * 1000) / 10}%`;
+}
+
+function renderLeaderboardPreview() {
+  const target = byId("leaderboard-preview");
+  if (!target) return;
+  if (!BOARD.entries.length) {
+    target.innerHTML = '<p class="detail-empty">No leaderboard entries yet.</p>';
+    return;
+  }
+  target.innerHTML = BOARD.entries.slice(0, 3).map((entry) => `
+    <a class="leaderboard-mini-row" href="leaderboard.html">
+      <span class="rank">#${entry.rank}</span>
+      <span>${entry.agent_label}</span>
+      <strong>${pct(entry.weighted_pass_rate)}</strong>
+    </a>
+  `).join("");
 }
 
 function filteredFixtures() {
@@ -123,8 +145,8 @@ function renderFixtureGrid(items) {
       <h3>${fixture.title}</h3>
       <p>${cardText(fixture.summary)}</p>
       <div class="mini-stats">
-        <span>${fixture.criteria} criteria</span>
-        <span>${fixture.unsafe} boundaries</span>
+        <span>${fixture.criteria} pass checks</span>
+        <span>${fixture.unsafe} unsafe guards</span>
       </div>
     </button>
   `).join("");
@@ -156,6 +178,11 @@ function renderDetail() {
       <code>${fixture.command}</code>
     </div>
     <div class="detail-block">
+      <div class="detail-label">Scorer Commands</div>
+      <code>python run.py prepare tasks/fixtures/${fixture.id}/task.json</code>
+      <code>python run.py score tasks/fixtures/${fixture.id}/task.json --workspace &lt;workspace-from-prepare&gt;</code>
+    </div>
+    <div class="detail-block">
       <div class="detail-label">Allowed Paths</div>
       <code>${fixture.allowed}</code>
     </div>
@@ -181,5 +208,6 @@ function renderAll() {
 renderMetrics();
 renderReference();
 renderEvalSets();
+renderLeaderboardPreview();
 renderAll();
 byId("search").addEventListener("input", renderAll);

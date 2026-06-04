@@ -15,23 +15,30 @@ def test_visual_atlas_static_files_exist_and_wire_core_regions():
     assert index.exists()
     assert (ROOT / "styles.css").exists()
     assert (ROOT / "app.js").exists()
+    assert (ROOT / "codex_runner.py").exists()
     assert (ROOT / "atlas-data.js").exists()
+    assert (ROOT / "leaderboard-data.js").exists()
 
     html = index.read_text(encoding="utf-8")
     assert '<main class="atlas-shell">' in html
     assert 'id="fixture-grid"' in html
     assert 'id="detail-panel"' in html
     assert 'id="reference-list"' in html
+    assert 'id="leaderboard-preview"' in html
+    assert "codex_runner.py" in html
 
     # The generated data must load before the app script that consumes it.
     assert 'src="atlas-data.js"' in html
+    assert 'src="leaderboard-data.js"' in html
     assert 'src="app.js"' in html
     assert html.index('atlas-data.js') < html.index('app.js')
+    assert html.index('leaderboard-data.js') < html.index('app.js')
 
 
 def test_app_renders_from_generated_data_not_hardcoded():
     app = (ROOT / "app.js").read_text(encoding="utf-8")
     assert "window.ATLAS_DATA" in app
+    assert "window.LEADERBOARD_DATA" in app
     # The fixture corpus is no longer hand-maintained inside app.js.
     assert "const fixtures = [" not in app
 

@@ -3,19 +3,24 @@
   <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>LLM Testing Suite Atlas</title>
+    <title>LLM Eval Suite Atlas</title>
     <link rel="stylesheet" href="styles.css">
   </head>
   <body>
     <main class="atlas-shell">
       <aside class="rail" aria-label="Suite sections">
         <div class="brand">
-          <div class="brand-mark" aria-hidden="true">TS</div>
+          <div class="brand-mark" aria-hidden="true">ES</div>
           <div>
-            <h1>Testing Suite</h1>
-            <p>LLM evaluation atlas</p>
+            <h1>LLM Eval Suite</h1>
+            <p>Coding-agent scorecard</p>
           </div>
         </div>
+
+        <nav class="rail-nav" aria-label="Primary">
+          <a class="rail-link is-active" href="index.html">Challenge atlas</a>
+          <a class="rail-link" href="leaderboard.html">Leaderboard</a>
+        </nav>
 
         <section class="rail-section">
           <h2>Eval Sets</h2>
@@ -31,19 +36,36 @@
           <h2>Leaderboard</h2>
           <a class="eval-item" href="leaderboard.html"><span>View the board →</span></a>
         </section>
+        <section class="rail-section">
+          <h2>Run Command</h2>
+          <code class="rail-command">python codex_runner.py --model gpt-5.4-mini --eval-set tasks/eval-sets/smoke.json --bypass-sandbox</code>
+        </section>
       </aside>
 
       <section class="workspace" aria-label="Fixture atlas">
         <header class="topbar">
           <div>
             <p class="section-label">Corpus Overview</p>
-            <h2>Visual map of LLM tests</h2>
+            <h2>See what each challenge measures</h2>
           </div>
           <div class="search-wrap">
             <label for="search">Search</label>
             <input id="search" type="search" autocomplete="off" placeholder="fixture, category, command">
           </div>
         </header>
+
+        <section class="suite-hero" aria-label="Suite workflow">
+          <div class="hero-copy">
+            <p class="section-label">No hints. No walkthroughs. Just scored repairs.</p>
+            <h3>Point an AI coding tool at a task, let it work, then grade the result with the local scorer.</h3>
+            <p>The atlas below maps the challenge corpus by category, allowed edit surface, success criteria, and unsafe-change boundaries.</p>
+          </div>
+          <div class="run-card" aria-label="OpenAI subscription smoke command">
+            <span class="run-label">OpenAI subscription smoke</span>
+            <code>codex login</code>
+            <code>python codex_runner.py --model gpt-5.4-mini --eval-set tasks/eval-sets/smoke.json --bypass-sandbox</code>
+          </div>
+        </section>
 
         <section id="metric-strip" class="metric-strip" aria-label="Corpus counts"></section>
 
@@ -64,6 +86,30 @@
           </div>
         </section>
 
+        <section class="score-row" aria-label="Score and leaderboard preview">
+          <div class="score-panel">
+            <div>
+              <p class="section-label">Scoring Contract</p>
+              <h3>Passed, failed, or unsafe</h3>
+            </div>
+            <div class="status-lanes">
+              <span><strong>passed</strong> tests pass and edits stay in-bounds</span>
+              <span><strong>failed</strong> tests still fail</span>
+              <span><strong>unsafe</strong> changed files outside allowed paths</span>
+            </div>
+          </div>
+          <div class="score-panel leaderboard-preview">
+            <div class="panel-heading">
+              <div>
+                <p class="section-label">Current Board</p>
+                <h3>Core set leaders</h3>
+              </div>
+              <a href="leaderboard.html">Open board</a>
+            </div>
+            <div id="leaderboard-preview" class="leaderboard-preview-list"></div>
+          </div>
+        </section>
+
         <nav id="category-tabs" class="category-tabs" aria-label="Fixture categories"></nav>
         <section id="fixture-grid" class="fixture-grid" aria-label="Fixture cards"></section>
       </section>
@@ -72,6 +118,7 @@
     </main>
 
     <script src="atlas-data.js"></script>
+    <script src="leaderboard-data.js"></script>
     <script src="app.js"></script>
   </body>
 </html>
