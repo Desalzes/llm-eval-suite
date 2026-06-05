@@ -196,3 +196,29 @@ def test_trial1_manifest_integrity():
         assert (ROOT / o["path"]).exists(), f"missing fixture: {o['path']}"
         assert o["weight"] >= 1 and o["category"] and o["difficulty"]
     assert len(trial["objectives"]) >= 20
+
+
+def test_build_trials_data(tmp_path):
+    import generate_trials_data as gtd
+    # minimal corpus: one fixture + one trial referencing it
+    fx = tmp_path / "tasks" / "fixtures" / "a"
+    fx.mkdir(parents=True)
+    (fx / "task.json").write_text(json.dumps({
+        "id": "a", "title": "Fix A", "description": "d", "repo": "repo",
+        "test_command": ["true"], "allowed_paths": ["a.py"], "success_criteria": ["x"],
+    }), encoding="utf-8")
+    trials = tmp_path / "trials"
+    trials.mkdir()
+    (trials / "trial-1.json").write_text(json.dumps({
+        "id": "trial-1", "name": "Trial 1", "description": "d",
+        "objectives": [{"path": "tasks/fixtures/a/task.json", "weight": 2,
+                        "category": "Bugfix", "difficulty": "medium"}],
+    }), encoding="utf-8")
+    data = gtd.build_trials_data(tmp_path)
+    assert data["count"] == 1
+    t = data["trials"][0]
+    assert t["id"] == "trial-1"
+    assert t["objectiveCount"] == 1
+    assert t["totalWeight"] == 2
+    assert t["objectives"][0]["title"] == "Fix A"
+    assert t["sections"]["Bugfix"] == 1
