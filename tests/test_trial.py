@@ -46,3 +46,66 @@ def test_compute_trial_metrics():
     assert m["failure_mode_distribution"] == {"tests_failed": 1, "unsafe_scope": 1}
     assert m["restraint_summary"] == {"clean": False, "violations": 1,
                                       "violating_objectives": ["c"]}
+
+
+def _make_task(base, task_id="tiny-sub", allowed=None):
+    """A tiny task whose pristine repo is BROKEN: subtract returns a + b."""
+    base = Path(base)
+    repo = base / "repo"
+    repo.mkdir(parents=True, exist_ok=True)
+    (repo / "calc.py").write_text("def subtract(a, b):\n    return a + b\n", encoding="utf-8")
+    (repo / "test_calc.py").write_text(
+        "import unittest\n"
+        "from calc import subtract\n"
+        "class T(unittest.TestCase):\n"
+        "    def test_sub(self):\n"
+        "        self.assertEqual(subtract(7, 2), 5)\n",
+        encoding="utf-8",
+    )
+    task = {
+        "id": task_id,
+        "title": "Fix subtract",
+        "description": "Make subtract correct.",
+        "repo": "repo",
+        "test_command": ["python", "-m", "unittest", "discover"],
+        "allowed_paths": ["calc.py"] if allowed is None else allowed,
+        "success_criteria": ["tests pass"],
+    }
+    task_path = base / "task.json"
+    task_path.write_text(json.dumps(task), encoding="utf-8")
+    return task_path
+
+
+def _make_trial_manifest(base, objective_task_paths):
+    """objective_task_paths: list of (id, task_path). Returns the manifest path."""
+    manifest = {
+        "id": "mini-trial", "name": "Mini Trial", "description": "x",
+        "objectives": [
+            {"path": str(p), "weight": 2, "category": "Bugfix", "difficulty": "medium"}
+            for _, p in objective_task_paths
+        ],
+    }
+    mp = Path(base) / "trials" / "mini-trial.json"
+    mp.parent.mkdir(parents=True, exist_ok=True)
+    mp.write_text(json.dumps(manifest), encoding="utf-8")
+    return mp
+
+
+def _solve(ws):  # make the calculator fixture pass
+    (Path(ws) / "calc.py").write_text("def subtract(a, b):\n    return a - b\n", encoding="utf-8")
+
+
+def test_trial_prepare_lays_out_workspaces(tmp_path, monkeypatch):
+    monkeypatch.chdir(tmp_path)
+    p1 = _make_task(tmp_path / "tasks" / "a", task_id="a")
+    p2 = _make_task(tmp_path / "tasks" / "b", task_id="b")
+    mp = _make_trial_manifest(tmp_path, [("a", p1), ("b", p2)])
+    rc = run.main(["trial", "prepare", str(mp)])
+    assert rc == 0
+    runs = list((tmp_path / "runs").glob("*-trial-mini-trial"))
+    assert len(runs) == 1
+    assert (runs[0] / "a" / "workspace" / "calc.py").exists()
+    assert (runs[0] / "b" / "workspace" / "calc.py").exists()
+    trial_run = json.loads((runs[0] / "trial-run.json").read_text(encoding="utf-8"))
+    assert trial_run["trial_id"] == "mini-trial"
+    assert {o["id"] for o in trial_run["objectives"]} == {"a", "b"}

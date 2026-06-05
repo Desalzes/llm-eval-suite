@@ -329,6 +329,56 @@ def compute_trial_metrics(records: list) -> dict:
     }
 
 
+def _resolve_objective_task(entry_path: str, manifest_path: Path) -> Path:
+    raw = Path(entry_path)
+    candidates = [raw, Path.cwd() / raw, manifest_path.parent / raw]
+    return next((c for c in candidates if c.exists()), raw)
+
+
+def cmd_trial_prepare(args) -> int:
+    manifest_path = Path(args.trial).resolve()
+    trial = load_json(manifest_path)
+    run_id = new_run_id() + "-trial-" + trial["id"]
+    trial_run_dir = Path(args.runs_dir) / run_id
+    objectives = []
+    for entry in trial["objectives"]:
+        task_file = _resolve_objective_task(entry["path"], manifest_path)
+        if not task_file.exists():
+            print(f"ERROR: objective task not found: {entry['path']}", file=sys.stderr)
+            return 2
+        task = load_json(task_file)
+        repo = resolve_repo_dir(task_file, task)
+        if not repo.is_dir():
+            print(f"ERROR: repo dir not found: {repo}", file=sys.stderr)
+            return 2
+        obj_id = task["id"]
+        workspace = trial_run_dir / obj_id / "workspace"
+        workspace.parent.mkdir(parents=True, exist_ok=True)
+        shutil.copytree(repo, workspace, ignore=shutil.ignore_patterns(*IGNORED_NAMES))
+        objectives.append({
+            "id": obj_id,
+            "task_path": task_file.as_posix(),
+            "workspace": workspace.as_posix(),
+            "weight": int(entry.get("weight", 1)),
+            "category": entry.get("category", "Bugfix"),
+            "difficulty": entry.get("difficulty", "medium"),
+        })
+    trial_run = {
+        "trial_id": trial["id"],
+        "trial_name": trial.get("name", trial["id"]),
+        "run_id": run_id,
+        "manifest_path": manifest_path.as_posix(),
+        "objectives": objectives,
+    }
+    (trial_run_dir / "trial-run.json").write_text(json.dumps(trial_run, indent=2), encoding="utf-8")
+    print(f"Trial:       {trial['id']} - {trial.get('name', trial['id'])}")
+    print(f"Objectives:  {len(objectives)}")
+    print(f"Prepared under: {trial_run_dir.as_posix()}/<objective-id>/workspace")
+    print("Solve each objective's workspace (only edit that objective's allowed paths), then run:")
+    print(f"  python run.py trial score {args.trial}")
+    return 0
+
+
 def _validate_setup(setup: str) -> int:
     """0 if setups/<setup>/setup.json exists and its id matches; else 2 (+ prints why)."""
     setup_file = Path("setups") / setup / "setup.json"
@@ -714,6 +764,13 @@ def build_parser() -> argparse.ArgumentParser:
     se_val = se_sub.add_parser("validate", help="check a setup (warns on task-specific hints)")
     se_val.add_argument("name")
     se_val.set_defaults(func=cmd_setup_validate)
+
+    tr = sub.add_parser("trial", help="run a composite Trial (many objectives -> one /100 + report)")
+    tr_sub = tr.add_subparsers(dest="trial_cmd", required=True)
+    tr_prep = tr_sub.add_parser("prepare", help="lay out a workspace per objective")
+    tr_prep.add_argument("trial")
+    tr_prep.add_argument("--runs-dir", default="runs")
+    tr_prep.set_defaults(func=cmd_trial_prepare)
 
     return p
 
