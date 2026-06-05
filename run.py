@@ -379,6 +379,126 @@ def cmd_trial_prepare(args) -> int:
     return 0
 
 
+def _latest_trial_run(runs_dir: Path, trial_id: str):
+    best = None
+    for tr in Path(runs_dir).glob("*/trial-run.json"):
+        try:
+            data = load_json(tr)
+        except (OSError, json.JSONDecodeError):
+            continue
+        if data.get("trial_id") == trial_id:
+            mtime = tr.stat().st_mtime
+            if best is None or mtime > best[0]:
+                best = (mtime, tr.parent, data)
+    return (best[1], best[2]) if best else (None, None)
+
+
+def cmd_trial_score(args) -> int:
+    manifest_path = Path(args.trial).resolve()
+    trial = load_json(manifest_path)
+    runs_dir = Path(args.runs_dir)
+    if args.emit_entry and not args.setup:
+        print("Leaderboard entries require --setup <setup-id> so results are reproducible.")
+        return 2
+    if args.setup:
+        rc = _validate_setup(args.setup)
+        if rc != 0:
+            return rc
+    if args.trial_run:
+        trial_run_dir = Path(args.trial_run)
+        trial_run = load_json(trial_run_dir / "trial-run.json")
+    else:
+        trial_run_dir, trial_run = _latest_trial_run(runs_dir, trial["id"])
+        if trial_run is None:
+            print(f"ERROR: no prepared run for trial '{trial['id']}' under {runs_dir.as_posix()}; "
+                  f"run `python run.py trial prepare {args.trial}` first.", file=sys.stderr)
+            return 2
+    records, status_counts, weighted_counts, failure_tag_counts = [], {}, {}, {}
+    total_weight = passed_weight = 0
+    for obj in trial_run["objectives"]:
+        weight = int(obj.get("weight", 1))
+        total_weight += weight
+        task_file = Path(obj["task_path"])
+        workspace = Path(obj["workspace"])
+        if not task_file.exists() or not workspace.is_dir():
+            status, tags = "missing_result", ["missing_result"]
+        else:
+            task = load_json(task_file)
+            result = score_workspace(task_file, task, workspace)
+            result["run_id"] = trial_run["run_id"]
+            (workspace.parent / "run-result.json").write_text(
+                json.dumps(result, indent=2), encoding="utf-8")
+            status = result["status"]
+            tags = list(result.get("failure_tags", []))
+        for tag in tags:
+            failure_tag_counts[tag] = failure_tag_counts.get(tag, 0) + 1
+        status_counts[status] = status_counts.get(status, 0) + 1
+        weighted_counts[status] = weighted_counts.get(status, 0) + weight
+        if status == "passed":
+            passed_weight += weight
+        records.append({
+            "objective_id": obj["id"], "task_id": obj["id"], "weight": weight,
+            "category": obj.get("category", "Bugfix"),
+            "difficulty": obj.get("difficulty", "medium"),
+            "status": status, "failure_tags": tags,
+        })
+    flagged_unsafe = any(r["status"] == "unsafe" for r in records)
+    if flagged_unsafe:
+        overall = "unsafe"
+    elif records and all(r["status"] == "passed" for r in records):
+        overall = "passed"
+    else:
+        overall = "failed"
+    weighted_pass_rate = round(passed_weight / total_weight, 4) if total_weight else 0.0
+    trial_score = compute_trial_score(weighted_pass_rate, flagged_unsafe)
+    summary = {
+        "run_id": trial_run["run_id"],
+        "run_dir": trial_run_dir.as_posix(),
+        "trial_id": trial["id"],
+        "trial_name": trial.get("name", trial["id"]),
+        "profile_id": "byo",
+        "status": overall,
+        "trial_score": trial_score,
+        "flagged_unsafe": flagged_unsafe,
+        "aggregate_stats": {
+            "weighted_pass_rate": weighted_pass_rate,
+            "passed_weight": passed_weight,
+            "total_weight": total_weight,
+        },
+        "metrics": compute_trial_metrics(records),
+        "grade": compute_grade(records, weighted_pass_rate, status_counts),
+        "status_counts": status_counts,
+        "weighted_status_counts": weighted_counts,
+        "failure_tag_counts": failure_tag_counts,
+        "objectives": records,
+    }
+    for key, val in (
+        ("agent_label", args.agent), ("model", args.model),
+        ("wall_clock_seconds", args.seconds),
+        ("tokens_in", args.tokens_in), ("tokens_out", args.tokens_out),
+        ("cost_usd", args.cost_usd), ("submitted_by", args.submitted_by),
+        ("notes", args.notes), ("setup_id", args.setup),
+    ):
+        if val is not None:
+            summary[key] = val
+    if any(v is not None for v in (args.agent, args.seconds, args.tokens_in, args.tokens_out)):
+        summary.setdefault("metrics_self_reported", True)
+    (trial_run_dir / "trial-summary.json").write_text(json.dumps(summary, indent=2), encoding="utf-8")
+    if args.emit_entry:
+        entries_dir = Path("leaderboard") / "entries"
+        entries_dir.mkdir(parents=True, exist_ok=True)
+        entry_path = entries_dir / f"{args.emit_entry}.json"
+        entry_path.write_text(json.dumps(summary, indent=2), encoding="utf-8")
+        print(f"  wrote leaderboard entry {entry_path.as_posix()}")
+    mark = "OK" if not flagged_unsafe else "FAIL"
+    print(f"{trial['id']}: {trial_score}/100  (weighted pass "
+          f"{round(weighted_pass_rate * 100, 1)}%, {passed_weight}/{total_weight}) "
+          f"- unsafe {status_counts.get('unsafe', 0)} [{mark}]")
+    print(f"  status_counts: {status_counts}")
+    print(f"  wrote {(trial_run_dir / 'trial-summary.json').as_posix()}")
+    return 0
+
+
 def _validate_setup(setup: str) -> int:
     """0 if setups/<setup>/setup.json exists and its id matches; else 2 (+ prints why)."""
     setup_file = Path("setups") / setup / "setup.json"
@@ -771,6 +891,24 @@ def build_parser() -> argparse.ArgumentParser:
     tr_prep.add_argument("trial")
     tr_prep.add_argument("--runs-dir", default="runs")
     tr_prep.set_defaults(func=cmd_trial_prepare)
+
+    tr_score = tr_sub.add_parser("score", help="score the prepared objectives -> /100 + report")
+    tr_score.add_argument("trial")
+    tr_score.add_argument("--runs-dir", default="runs")
+    tr_score.add_argument("--trial-run", dest="trial_run",
+                          help="explicit prepared trial-run dir (else the latest is used)")
+    tr_score.add_argument("--agent")
+    tr_score.add_argument("--model")
+    tr_score.add_argument("--seconds", type=float)
+    tr_score.add_argument("--tokens-in", type=int, dest="tokens_in")
+    tr_score.add_argument("--tokens-out", type=int, dest="tokens_out")
+    tr_score.add_argument("--cost-usd", type=float, dest="cost_usd")
+    tr_score.add_argument("--submitted-by", dest="submitted_by")
+    tr_score.add_argument("--notes")
+    tr_score.add_argument("--setup", dest="setup",
+                          help="setup id that produced this result (REQUIRED with --emit-entry)")
+    tr_score.add_argument("--emit-entry", dest="emit_entry")
+    tr_score.set_defaults(func=cmd_trial_score)
 
     return p
 
