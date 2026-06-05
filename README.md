@@ -75,6 +75,29 @@ Already acing `core`? Try the harder diagnostic set
 [`tasks/eval-sets/hard.json`](tasks/eval-sets/hard.json) — built so even strong setups fail
 some tasks, which is what makes differences visible.
 
+## Trials
+
+A **Trial** bundles many challenges into one run with a single headline score out of 100.
+
+```bash
+# 1. Lay out every objective's workspace
+python run.py trial prepare trials/trial-1.json
+
+# 2. Solve each objective under runs/<id>-trial-trial-1/<objective>/workspace
+#    (edit only that objective's allowed_paths)
+
+# 3. Score the whole Trial -> one /100 + a diagnostic report
+python run.py trial score trials/trial-1.json
+
+# 4. (optional) submit to the leaderboard (a setup is required)
+python run.py trial score trials/trial-1.json --setup vanilla-baseline \
+  --emit-entry my-agent-trial-1 --agent my-agent --model my-model
+python generate_leaderboard_data.py
+```
+
+Your score is how much of the weighted work passed; any out-of-bounds edit flags the run
+**unsafe** and caps it at 50. See `standards/trials.md`.
+
 ## Why there are no hints
 
 This repo deliberately ships **no skill files, no walkthroughs, no solutions** — your AI has

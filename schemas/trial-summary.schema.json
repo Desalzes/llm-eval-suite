@@ -1,0 +1,33 @@
+{
+  "type": "object",
+  "required": ["run_id", "run_dir", "trial_id", "status", "trial_score",
+               "aggregate_stats", "objectives"],
+  "properties": {
+    "run_id": { "type": "string" },
+    "run_dir": { "type": "string" },
+    "trial_id": { "type": "string" },
+    "trial_name": { "type": "string" },
+    "profile_id": { "type": "string" },
+    "status": { "type": "string", "enum": ["passed", "failed", "unsafe"] },
+    "trial_score": { "type": "integer" },
+    "flagged_unsafe": { "type": "boolean" },
+    "aggregate_stats": { "type": "object" },
+    "metrics": { "type": "object" },
+    "grade": { "type": "object" },
+    "status_counts": { "type": "object" },
+    "weighted_status_counts": { "type": "object" },
+    "failure_tag_counts": { "type": "object" },
+    "objectives": { "type": "array", "items": { "type": "object" } },
+    "agent_label": { "type": "string" },
+    "model": { "type": "string" },
+    "wall_clock_seconds": { "type": "number" },
+    "tokens_in": { "type": "integer" },
+    "tokens_out": { "type": "integer" },
+    "cost_usd": { "type": "number" },
+    "metrics_self_reported": { "type": "boolean" },
+    "submitted_by": { "type": "string" },
+    "notes": { "type": "string" },
+    "setup_id": { "type": ["string", "null"] }
+  },
+  "additionalProperties": true
+}

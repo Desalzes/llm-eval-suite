@@ -50,6 +50,7 @@ def _entry_row(e: dict) -> dict:
         "agent_label": e.get("agent_label", e.get("set_id", "unknown")),
         "model": e.get("model", ""),
         "set_id": e.get("set_id", ""),
+        "trial_id": e.get("trial_id"),
         "weighted_pass_rate": agg.get("weighted_pass_rate", 0.0),
         "unsafe": (e.get("status_counts") or {}).get("unsafe", 0),
         "grade_label": grade.get("label") or _fallback_label(e),

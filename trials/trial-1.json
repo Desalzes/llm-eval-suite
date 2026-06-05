@@ -1,0 +1,205 @@
+{
+  "id": "trial-1",
+  "name": "Trial 1 - The Full Bench",
+  "description": "One composite challenge spanning the eligible corpus. Run every objective, then score once for a headline /100 plus a diagnostic report (by category, by difficulty, failure modes, restraint).",
+  "objectives": [
+    {
+      "path": "tasks/fixtures/batch-partial-success/task.json",
+      "weight": 2,
+      "category": "Bugfix",
+      "difficulty": "hard"
+    },
+    {
+      "path": "tasks/fixtures/dependency-api-migration/task.json",
+      "weight": 2,
+      "category": "Bugfix",
+      "difficulty": "medium"
+    },
+    {
+      "path": "tasks/fixtures/failure-classification-taxonomy/task.json",
+      "weight": 2,
+      "category": "Bugfix",
+      "difficulty": "medium"
+    },
+    {
+      "path": "tasks/fixtures/hidden-generalization-roman/task.json",
+      "weight": 2,
+      "category": "Bugfix",
+      "difficulty": "hard"
+    },
+    {
+      "path": "tasks/fixtures/idempotent-report-export/task.json",
+      "weight": 2,
+      "category": "Bugfix",
+      "difficulty": "hard"
+    },
+    {
+      "path": "tasks/fixtures/messy-csv-user-import/task.json",
+      "weight": 2,
+      "category": "Bugfix",
+      "difficulty": "hard"
+    },
+    {
+      "path": "tasks/fixtures/multi-file-hidden-coupling/task.json",
+      "weight": 2,
+      "category": "Bugfix",
+      "difficulty": "medium"
+    },
+    {
+      "path": "tasks/fixtures/order-dependent-state-leak/task.json",
+      "weight": 2,
+      "category": "Bugfix",
+      "difficulty": "medium"
+    },
+    {
+      "path": "tasks/fixtures/process-boundary-failure-classification/task.json",
+      "weight": 2,
+      "category": "Bugfix",
+      "difficulty": "medium"
+    },
+    {
+      "path": "tasks/fixtures/public-api-compatibility/task.json",
+      "weight": 2,
+      "category": "Bugfix",
+      "difficulty": "hard"
+    },
+    {
+      "path": "tasks/fixtures/replay-state-isolation/task.json",
+      "weight": 2,
+      "category": "Bugfix",
+      "difficulty": "hard"
+    },
+    {
+      "path": "tasks/fixtures/innovation-construction-counterexample/task.json",
+      "weight": 2,
+      "category": "Innovation",
+      "difficulty": "hard"
+    },
+    {
+      "path": "tasks/fixtures/innovation-mixed-representation-search/task.json",
+      "weight": 2,
+      "category": "Innovation",
+      "difficulty": "hard"
+    },
+    {
+      "path": "tasks/fixtures/ambiguous-proration-policy/task.json",
+      "weight": 2,
+      "category": "Policy",
+      "difficulty": "medium"
+    },
+    {
+      "path": "tasks/fixtures/ambiguous-renewal-grace-policy/task.json",
+      "weight": 2,
+      "category": "Policy",
+      "difficulty": "medium"
+    },
+    {
+      "path": "tasks/fixtures/docs-to-code-implementation/task.json",
+      "weight": 2,
+      "category": "Policy",
+      "difficulty": "medium"
+    },
+    {
+      "path": "tasks/fixtures/long-context-flag-precedence/task.json",
+      "weight": 2,
+      "category": "Policy",
+      "difficulty": "hard"
+    },
+    {
+      "path": "tasks/fixtures/review-feedback-prioritization/task.json",
+      "weight": 2,
+      "category": "Policy",
+      "difficulty": "medium"
+    },
+    {
+      "path": "tasks/fixtures/temporal-cutoff-boundary/task.json",
+      "weight": 2,
+      "category": "Policy",
+      "difficulty": "hard"
+    },
+    {
+      "path": "tasks/fixtures/safety-boundary-routing-config/task.json",
+      "weight": 2,
+      "category": "Safety",
+      "difficulty": "hard"
+    },
+    {
+      "path": "tasks/fixtures/skill-reference-instruction-boundary/task.json",
+      "weight": 2,
+      "category": "Safety",
+      "difficulty": "medium"
+    },
+    {
+      "path": "tasks/fixtures/stale-handoff-authority-boundary/task.json",
+      "weight": 2,
+      "category": "Safety",
+      "difficulty": "hard"
+    },
+    {
+      "path": "tasks/fixtures/untrusted-doc-instruction-boundary/task.json",
+      "weight": 2,
+      "category": "Safety",
+      "difficulty": "hard"
+    },
+    {
+      "path": "tasks/fixtures/skill-asset-bundling/task.json",
+      "weight": 2,
+      "category": "Skill",
+      "difficulty": "medium"
+    },
+    {
+      "path": "tasks/fixtures/skill-creator-quality/task.json",
+      "weight": 2,
+      "category": "Skill",
+      "difficulty": "medium"
+    },
+    {
+      "path": "tasks/fixtures/skill-metadata-scope-control/task.json",
+      "weight": 2,
+      "category": "Skill",
+      "difficulty": "medium"
+    },
+    {
+      "path": "tasks/fixtures/skill-prerequisite-boundary/task.json",
+      "weight": 2,
+      "category": "Skill",
+      "difficulty": "medium"
+    },
+    {
+      "path": "tasks/fixtures/skill-progressive-disclosure/task.json",
+      "weight": 2,
+      "category": "Skill",
+      "difficulty": "medium"
+    },
+    {
+      "path": "tasks/fixtures/skill-reference-selection/task.json",
+      "weight": 2,
+      "category": "Skill",
+      "difficulty": "medium"
+    },
+    {
+      "path": "tasks/fixtures/skill-scaffold-workflow/task.json",
+      "weight": 2,
+      "category": "Skill",
+      "difficulty": "medium"
+    },
+    {
+      "path": "tasks/fixtures/skill-script-preservation/task.json",
+      "weight": 2,
+      "category": "Skill",
+      "difficulty": "medium"
+    },
+    {
+      "path": "tasks/fixtures/skill-trigger-boundary/task.json",
+      "weight": 2,
+      "category": "Skill",
+      "difficulty": "medium"
+    },
+    {
+      "path": "tasks/fixtures/skill-update-preservation/task.json",
+      "weight": 2,
+      "category": "Skill",
+      "difficulty": "medium"
+    }
+  ]
+}

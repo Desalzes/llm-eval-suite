@@ -35,4 +35,8 @@ setups use `agentic-default` (a default agentic run with no custom skills/instru
        python generate_leaderboard_data.py
        # commit leaderboard/entries/my-setup.json + leaderboard-data.js, then PR
 
+Leaderboard entries now carry a `trial_id` field when produced from a Trial run. To submit a
+Trial entry, use `python run.py trial score trials/trial-1.json --setup <id> --emit-entry <name>`
+followed by `python generate_leaderboard_data.py`. A `--setup` is required, as with eval-set entries.
+
 Be honest: run the real scorer, report real numbers. The board labels every entry `self-reported`.
