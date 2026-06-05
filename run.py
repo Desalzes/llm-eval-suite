@@ -284,6 +284,24 @@ def compute_grade(runs: list, weighted_pass_rate: float, status_counts: dict) ->
     }
 
 
+def _validate_setup(setup: str) -> int:
+    """0 if setups/<setup>/setup.json exists and its id matches; else 2 (+ prints why)."""
+    setup_file = Path("setups") / setup / "setup.json"
+    if not setup_file.exists():
+        print(f"error: setup '{setup}' not found (expected {setup_file.as_posix()}); "
+              "create it with `python run.py setup new <name>`.")
+        return 2
+    try:
+        declared_id = json.loads(setup_file.read_text(encoding="utf-8")).get("id")
+    except (OSError, json.JSONDecodeError):
+        declared_id = None
+    if declared_id != setup:
+        print(f"error: setup id mismatch - {setup_file.as_posix()} declares "
+              f"'{declared_id}', not '{setup}'.")
+        return 2
+    return 0
+
+
 def cmd_score_set(args) -> int:
     set_path = Path(args.eval_set).resolve()
     eval_set = load_json(set_path)
@@ -294,19 +312,9 @@ def cmd_score_set(args) -> int:
         print("Leaderboard entries require --setup <setup-id> so results are reproducible.")
         return 2
     if args.setup:
-        setup_file = Path("setups") / args.setup / "setup.json"
-        if not setup_file.exists():
-            print(f"error: setup '{args.setup}' not found (expected {setup_file.as_posix()}); "
-                  "create it with `python run.py setup new <name>`.")
-            return 2
-        try:
-            declared_id = json.loads(setup_file.read_text(encoding="utf-8")).get("id")
-        except (OSError, json.JSONDecodeError):
-            declared_id = None
-        if declared_id != args.setup:
-            print(f"error: setup id mismatch - {setup_file.as_posix()} declares "
-                  f"'{declared_id}', not '{args.setup}'.")
-            return 2
+        rc = _validate_setup(args.setup)
+        if rc != 0:
+            return rc
     status_counts, weighted_counts, runs = {}, {}, []
     failure_tag_counts = {}
     total_weight = passed_weight = 0
