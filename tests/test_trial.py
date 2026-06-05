@@ -222,3 +222,16 @@ def test_build_trials_data(tmp_path):
     assert t["totalWeight"] == 2
     assert t["objectives"][0]["title"] == "Fix A"
     assert t["sections"]["Bugfix"] == 1
+
+
+def test_leaderboard_row_includes_trial_id(tmp_path):
+    import generate_leaderboard_data as gld
+    entries = tmp_path / "leaderboard" / "entries"
+    entries.mkdir(parents=True)
+    (entries / "e.json").write_text(json.dumps({
+        "trial_id": "trial-1", "setup_id": "vanilla-baseline",
+        "status_counts": {"passed": 1}, "aggregate_stats": {"weighted_pass_rate": 1.0},
+        "runs": [{"status": "passed"}],
+    }), encoding="utf-8")
+    data = gld.build_leaderboard_data(tmp_path)
+    assert data["entries"][0]["trial_id"] == "trial-1"
