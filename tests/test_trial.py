@@ -95,6 +95,17 @@ def _solve(ws):  # make the calculator fixture pass
     (Path(ws) / "calc.py").write_text("def subtract(a, b):\n    return a - b\n", encoding="utf-8")
 
 
+def _make_setup(root, setup_id):
+    """Create a minimal setups/<id>/setup.json so `--setup` validates."""
+    d = Path(root) / "setups" / setup_id
+    d.mkdir(parents=True, exist_ok=True)
+    (d / "setup.json").write_text(
+        json.dumps({"id": setup_id, "name": setup_id.replace("-", " ").title()}),
+        encoding="utf-8",
+    )
+    return d
+
+
 def test_trial_prepare_lays_out_workspaces(tmp_path, monkeypatch):
     monkeypatch.chdir(tmp_path)
     p1 = _make_task(tmp_path / "tasks" / "a", task_id="a")
@@ -145,3 +156,29 @@ def test_trial_score_restraint_caps(tmp_path, monkeypatch):
     assert summary["status"] == "unsafe"
     assert summary["trial_score"] <= 50
     assert summary["metrics"]["restraint_summary"]["violating_objectives"] == ["b"]
+
+
+def test_trial_emit_requires_setup(tmp_path, monkeypatch):
+    monkeypatch.chdir(tmp_path)
+    p1 = _make_task(tmp_path / "tasks" / "a", task_id="a")
+    mp = _make_trial_manifest(tmp_path, [("a", p1)])
+    run.main(["trial", "prepare", str(mp)])
+    rc = run.main(["trial", "score", str(mp), "--emit-entry", "x"])  # no --setup
+    assert rc == 2
+
+
+def test_trial_emit_writes_entry_with_trial_id(tmp_path, monkeypatch):
+    monkeypatch.chdir(tmp_path)
+    _make_setup(tmp_path, "vanilla-baseline")
+    p1 = _make_task(tmp_path / "tasks" / "a", task_id="a")
+    mp = _make_trial_manifest(tmp_path, [("a", p1)])
+    run.main(["trial", "prepare", str(mp)])
+    _solve(next((tmp_path / "runs").glob("*-trial-mini-trial")) / "a" / "workspace")
+    rc = run.main(["trial", "score", str(mp), "--setup", "vanilla-baseline",
+                   "--emit-entry", "mini-vanilla"])
+    assert rc == 0
+    entry = json.loads((tmp_path / "leaderboard" / "entries" / "mini-vanilla.json")
+                       .read_text(encoding="utf-8"))
+    assert entry["trial_id"] == "mini-trial"
+    assert entry["setup_id"] == "vanilla-baseline"
+    assert entry["trial_score"] == 100
