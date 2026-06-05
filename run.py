@@ -136,14 +136,10 @@ def compute_failure_tags(tests_passed: bool, exit_code: int, changed: list,
     return tags
 
 
-def cmd_score(args) -> int:
-    task_path = Path(args.task).resolve()
-    task = load_json(task_path)
+def score_workspace(task_path: Path, task: dict, workspace: Path) -> dict:
+    """Grade a solved workspace against a task; return the run-result dict
+    (caller writes it). Shared by `score` and `trial score`."""
     pristine = resolve_repo_dir(task_path, task)
-    workspace = Path(args.workspace).resolve()
-    if not workspace.is_dir():
-        print(f"ERROR: workspace not found: {workspace}", file=sys.stderr)
-        return 2
     exit_code, output = run_test_command(task["test_command"], workspace)
     tests_passed = exit_code == 0
     changed = changed_files(pristine, workspace)
@@ -155,19 +151,15 @@ def cmd_score(args) -> int:
     if grader_cmd:
         grader_exit, grader_output = run_grader_command(grader_cmd, task_path.parent, workspace)
         grader_passed = grader_exit == 0
-
     overall_passed = tests_passed and grader_passed
     failure_tags = compute_failure_tags(
         tests_passed, exit_code, changed, forbidden, task["allowed_paths"])
     if grader_cmd and not grader_passed:
         failure_tags.append("grader_failed")
-    status = compute_status(overall_passed, forbidden)
-    run_id = workspace.parent.name or new_run_id()
     result = {
-        "run_id": run_id,
         "task_id": task["id"],
         "profile_id": "byo",
-        "status": status,
+        "status": compute_status(overall_passed, forbidden),
         "tests_passed": tests_passed,
         "changed_files": changed,
         "forbidden_changed_files": forbidden,
@@ -181,17 +173,29 @@ def cmd_score(args) -> int:
         result["grader_passed"] = grader_passed
         result["grader_exit_code"] = grader_exit
         result["grader_output"] = grader_output[-4000:]
+    return result
+
+
+def cmd_score(args) -> int:
+    task_path = Path(args.task).resolve()
+    task = load_json(task_path)
+    workspace = Path(args.workspace).resolve()
+    if not workspace.is_dir():
+        print(f"ERROR: workspace not found: {workspace}", file=sys.stderr)
+        return 2
+    result = score_workspace(task_path, task, workspace)
+    result["run_id"] = workspace.parent.name or new_run_id()
     out_path = workspace.parent / "run-result.json"
     out_path.write_text(json.dumps(result, indent=2), encoding="utf-8")
-    print(status.upper())
-    print(f"  tests_passed: {tests_passed} (exit {exit_code})")
-    if grader_cmd:
-        print(f"  grader_passed: {grader_passed} (exit {grader_exit})")
-    print(f"  changed_files: {changed}")
-    if forbidden:
-        print(f"  FORBIDDEN (outside allowed_paths): {forbidden}")
-    if failure_tags:
-        print(f"  failure_tags: {failure_tags}")
+    print(result["status"].upper())
+    print(f"  tests_passed: {result['tests_passed']} (exit {result['test_exit_code']})")
+    if "grader_passed" in result:
+        print(f"  grader_passed: {result['grader_passed']} (exit {result['grader_exit_code']})")
+    print(f"  changed_files: {result['changed_files']}")
+    if result["forbidden_changed_files"]:
+        print(f"  FORBIDDEN (outside allowed_paths): {result['forbidden_changed_files']}")
+    if result["failure_tags"]:
+        print(f"  failure_tags: {result['failure_tags']}")
     print(f"  wrote {out_path}")
     return 0
 
