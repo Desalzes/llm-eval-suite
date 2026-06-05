@@ -406,7 +406,12 @@ def cmd_trial_score(args) -> int:
             return rc
     if args.trial_run:
         trial_run_dir = Path(args.trial_run)
-        trial_run = load_json(trial_run_dir / "trial-run.json")
+        tr_file = trial_run_dir / "trial-run.json"
+        if not tr_file.exists():
+            print(f"ERROR: no trial-run.json in {trial_run_dir.as_posix()}; "
+                  f"run `python run.py trial prepare {args.trial}` first.", file=sys.stderr)
+            return 2
+        trial_run = load_json(tr_file)
     else:
         trial_run_dir, trial_run = _latest_trial_run(runs_dir, trial["id"])
         if trial_run is None:
