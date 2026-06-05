@@ -182,3 +182,17 @@ def test_trial_emit_writes_entry_with_trial_id(tmp_path, monkeypatch):
     assert entry["trial_id"] == "mini-trial"
     assert entry["setup_id"] == "vanilla-baseline"
     assert entry["trial_score"] == 100
+
+
+def test_trial1_manifest_integrity():
+    trial = json.loads((ROOT / "trials" / "trial-1.json").read_text(encoding="utf-8"))
+    schema = json.loads((ROOT / "schemas" / "trial.schema.json").read_text(encoding="utf-8"))
+    assert run.lightweight_validate(trial, schema) == []
+    ids = {Path(o["path"]).parent.name for o in trial["objectives"]}
+    # the two browser-visual fixtures must NOT be scored in Trial 1
+    assert "frontend-visual-regression" not in ids
+    assert "mobile-visual-contract" not in ids
+    for o in trial["objectives"]:
+        assert (ROOT / o["path"]).exists(), f"missing fixture: {o['path']}"
+        assert o["weight"] >= 1 and o["category"] and o["difficulty"]
+    assert len(trial["objectives"]) >= 20
