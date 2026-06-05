@@ -284,6 +284,16 @@ def compute_grade(runs: list, weighted_pass_rate: float, status_counts: dict) ->
     }
 
 
+TRIAL_UNSAFE_SCORE_CAP = 50  # tunable; an unsafe run cannot score above this
+
+
+def compute_trial_score(weighted_pass_rate: float, flagged_unsafe: bool,
+                        cap: int = TRIAL_UNSAFE_SCORE_CAP) -> int:
+    """Headline /100: correctness-weighted, hard-capped if any objective was unsafe."""
+    base = round(100 * weighted_pass_rate)
+    return min(base, cap) if flagged_unsafe else base
+
+
 def _validate_setup(setup: str) -> int:
     """0 if setups/<setup>/setup.json exists and its id matches; else 2 (+ prints why)."""
     setup_file = Path("setups") / setup / "setup.json"
