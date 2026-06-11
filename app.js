@@ -1,18 +1,21 @@
 /* ============================================================================
    app.js — LLM Eval Suite · Coding-Agent Scorecard
    ----------------------------------------------------------------------------
-   Plain, dependency-free front-end. Simple hash routing wires four sections:
+   Plain, dependency-free front-end. Simple hash routing wires five sections:
        #home              the front door + quickstart
        #setups            gallery of "setups" (the skills/instructions you give your AI)
        #setups/<id>       one setup, with a read-only file browser
        #challenges        searchable grid of challenges
        #challenges/<id>   one challenge's plain-English contract
+       #trials            composite Trial runs
+       #trials/<id>       one Trial, its objectives, report card, and board
        #leaderboard       ranked results, linked back to the setup that produced them
 
-   ALL displayed content comes from three globals (generated from disk by Python):
+   ALL displayed content comes from generated globals (generated from disk by Python):
        window.ATLAS_DATA        challenge corpus + summary + category palette
        window.LEADERBOARD_DATA  ranked results
        window.SETUPS_DATA       setups (instructions + skills + files)
+       window.TRIALS_DATA       composite Trial manifests for the GUI
    In production these are regenerated from disk by Python; we only READ them.
    If a global is missing we render a graceful empty state instead of crashing.
 
@@ -44,6 +47,10 @@
   function fmtInt(n) {
     if (n == null) return "—";
     return Number(n).toLocaleString("en-US");
+  }
+
+  function fmtPct(rate) {
+    return Math.round(Number(rate || 0) * 100) + "%";
   }
 
   /* ----------------------------------------------------------------- icons
@@ -547,6 +554,354 @@
     </div>`;
   }
 
+  /* =============================================================  TRIALS  == */
+
+  function allTrials() {
+    const td = data("TRIALS_DATA", null);
+    return (td && Array.isArray(td.trials)) ? td.trials : [];
+  }
+
+  function findTrial(id) {
+    return allTrials().find((t) => t.id === id) || null;
+  }
+
+  function trialManifestPath(trial) {
+    return `trials/${trial.id}.json`;
+  }
+
+  function shortTrialLabel(id) {
+    const t = findTrial(id);
+    if (!t) return id || "Trial";
+    const m = String(t.name || t.id).match(/^(Trial\s+\d+)/i);
+    return m ? m[1] : (t.name || t.id);
+  }
+
+  function trialEntries(trialId) {
+    const lb = data("LEADERBOARD_DATA", null);
+    const entries = (lb && Array.isArray(lb.entries)) ? lb.entries.slice() : [];
+    return entries.filter((e) => e.trial_id === trialId);
+  }
+
+  function trialScoreFromEntry(e) {
+    if (e.trial_score != null) return Number(e.trial_score);
+    const base = Math.round(Number(e.weighted_pass_rate || 0) * 100);
+    return (e.unsafe || 0) > 0 ? Math.min(base, 50) : base;
+  }
+
+  function trialSummaryFor(id) {
+    const summaries = data("TRIAL_SUMMARIES_DATA", null);
+    if (!summaries) return null;
+    if (Array.isArray(summaries)) return summaries.find((s) => s.trial_id === id) || null;
+    return summaries[id] || null;
+  }
+
+  function trialsHead() {
+    return `<div class="section-head">
+      <div class="eyebrow">Composite runs</div>
+      <h1>Trials</h1>
+      <p class="lede">A Trial is a fixed composite benchmark. Run the same Trial with a
+        vanilla prompt, then with a workbench suite, and compare the score lift.</p>
+    </div>`;
+  }
+
+  function trialSectionPills(trial) {
+    const sections = trial.sections || {};
+    return Object.keys(sections).sort().map(function (cat) {
+      return `<span class="trial-section-pill">${catPill(cat)} <span>${esc(sections[cat])}</span></span>`;
+    }).join("");
+  }
+
+  function viewTrials() {
+    const trials = allTrials();
+    if (!trials.length) {
+      return `<div class="view">${trialsHead()}${emptyState("No Trials found", "Regenerate trials-data.js from trials/*.json.")}</div>`;
+    }
+
+    const cards = trials.map(function (trial) {
+      const boardCount = trialEntries(trial.id).length;
+      return `<a class="panel trial-card" href="#trials/${esc(trial.id)}">
+        <div class="trial-card-main">
+          <div>
+            <h2>${esc(trial.name || trial.id)}</h2>
+            <p>${esc(trial.description || "")}</p>
+          </div>
+          <span class="trial-arrow">${I.chevron}</span>
+        </div>
+        <div class="trial-facts">
+          <div class="fact"><div class="fact-k">Objectives</div><div class="fact-v">${esc(trial.objectiveCount || 0)}</div></div>
+          <div class="fact"><div class="fact-k">Weight</div><div class="fact-v">${esc(trial.totalWeight || 0)}</div></div>
+          <div class="fact"><div class="fact-k">Board rows</div><div class="fact-v">${esc(boardCount)}</div></div>
+        </div>
+        <div class="trial-sections">${trialSectionPills(trial)}</div>
+      </a>`;
+    }).join("");
+
+    return `<div class="view">
+      ${trialsHead()}
+      <div class="trial-list">${cards}</div>
+    </div>`;
+  }
+
+  function renderTrialCommands(trial) {
+    const manifest = trialManifestPath(trial);
+    const prepare = `python run.py trial prepare ${manifest}`;
+    const score = `python run.py trial score ${manifest}`;
+    const vanilla = `python run.py trial score ${manifest} --setup vanilla-baseline --emit-entry vanilla-${trial.id} --agent my-agent --model my-model`;
+    const workbench = `python run.py trial score ${manifest} --setup my-workbench --emit-entry workbench-${trial.id} --agent my-agent --model my-model`;
+    return `<div class="panel trial-commands">
+      <h2>Run ${esc(shortTrialLabel(trial.id))}</h2>
+      <p class="trial-command-note">Use the same model on the same Trial, changing only the setup. That is the clean setup-lift comparison.</p>
+      <div class="trial-command-grid">
+        <div>
+          <div class="cmd-label">Prepare workspaces</div>
+          ${cmdBlock(prepare, { light: true })}
+        </div>
+        <div>
+          <div class="cmd-label">Score the Trial</div>
+          ${cmdBlock(score, { light: true })}
+        </div>
+        <div>
+          <div class="cmd-label">Publish vanilla prompt score</div>
+          ${cmdBlock(vanilla, { light: true })}
+        </div>
+        <div>
+          <div class="cmd-label">Publish workbench suite score</div>
+          ${cmdBlock(workbench, { light: true })}
+          ${cmdBlock("python generate_leaderboard_data.py", { light: true })}
+        </div>
+      </div>
+    </div>`;
+  }
+
+  function isBaselineSetup(setupId) {
+    return setupId === "vanilla-baseline" || setupId === "agentic-default" || setupId === "minimal-claude";
+  }
+
+  function bestTrialEntry(entries, predicate) {
+    return entries.filter(predicate).sort(function (a, b) {
+      const aFlag = (a.unsafe || 0) > 0 ? 1 : 0;
+      const bFlag = (b.unsafe || 0) > 0 ? 1 : 0;
+      if (aFlag !== bFlag) return aFlag - bFlag;
+      return trialScoreFromEntry(b) - trialScoreFromEntry(a);
+    })[0] || null;
+  }
+
+  function setupName(setupId) {
+    const setup = findSetup(setupId);
+    return setup ? setup.name : (setupId || "unknown setup");
+  }
+
+  function renderSetupLift(trial) {
+    const entries = trialEntries(trial.id);
+    const baseline = bestTrialEntry(entries, function (e) { return isBaselineSetup(e.setup_id); });
+    const workbench = bestTrialEntry(entries, function (e) { return e.setup_id && !isBaselineSetup(e.setup_id); });
+    const hasPair = baseline && workbench;
+    const baseScore = baseline ? trialScoreFromEntry(baseline) : null;
+    const workScore = workbench ? trialScoreFromEntry(workbench) : null;
+    const lift = hasPair ? workScore - baseScore : null;
+
+    return `<div class="panel setup-lift">
+      <div class="trial-panel-head">
+        <h2>Setup lift</h2>
+        <span class="chip">same Trial</span>
+      </div>
+      <p class="setup-lift-note">This is the core comparison: vanilla-baseline versus a workbench suite on the exact same fixed Trial.</p>
+      <div class="lift-grid">
+        <div class="lift-cell">
+          <div class="fact-k">Vanilla prompt</div>
+          <div class="lift-score">${baseScore == null ? "--" : esc(baseScore)}<span>/100</span></div>
+          <div class="lift-label">${baseline ? esc(setupName(baseline.setup_id)) : "no row yet"}</div>
+        </div>
+        <div class="lift-cell">
+          <div class="fact-k">Workbench suite</div>
+          <div class="lift-score">${workScore == null ? "--" : esc(workScore)}<span>/100</span></div>
+          <div class="lift-label">${workbench ? esc(setupName(workbench.setup_id)) : "no row yet"}</div>
+        </div>
+        <div class="lift-cell lift-delta">
+          <div class="fact-k">Lift</div>
+          <div class="lift-score">${lift == null ? "--" : (lift >= 0 ? "+" : "") + esc(lift)}<span>pts</span></div>
+          <div class="lift-label">${hasPair ? "setup effect" : "needs both rows"}</div>
+        </div>
+      </div>
+    </div>`;
+  }
+
+  function renderTrialBoard(trial) {
+    const entries = trialEntries(trial.id).sort(function (a, b) {
+      const aFlag = (a.unsafe || 0) > 0 ? 1 : 0;
+      const bFlag = (b.unsafe || 0) > 0 ? 1 : 0;
+      if (aFlag !== bFlag) return aFlag - bFlag;
+      return trialScoreFromEntry(b) - trialScoreFromEntry(a);
+    });
+    if (!entries.length) {
+      return `<div class="panel trial-board">
+        <div class="trial-panel-head">
+          <h2>${esc(shortTrialLabel(trial.id))} board</h2>
+          <a class="btn small" href="#leaderboard?trial=${esc(trial.id)}">Open leaderboard</a>
+        </div>
+        ${emptyState("No Trial runs yet", "Score a legitimate run with --emit-entry to seed this board.")}
+      </div>`;
+    }
+
+    const rows = entries.map(function (e, i) {
+      const flagged = (e.unsafe || 0) > 0;
+      const score = trialScoreFromEntry(e);
+      const setup = findSetup(e.setup_id);
+      const setupCell = setup
+        ? `<a class="setup-link" href="#setups/${esc(setup.id)}">${esc(setup.name)}</a>`
+        : (e.setup_id ? `<span class="setup-link" style="color:var(--ink-2);font-weight:550">${esc(e.setup_id)}</span>` : `<span class="dash">—</span>`);
+      return `<tr class="${flagged ? "flagged" : ""}">
+        <td><span class="rank-num ${i === 0 && !flagged ? "top" : ""}">${i + 1}</span></td>
+        <td><div class="agent-cell"><div class="a-label">${esc(e.agent_label)}</div><div class="a-model">${esc(e.model || "no model")}</div></div></td>
+        <td class="num"><span class="trial-score">${esc(score)}</span></td>
+        <td class="num">${fmtPct(e.weighted_pass_rate)}</td>
+        <td>${flagged ? `<span class="flag-pill">${I.alert} unsafe</span>` : `<span class="unsafe-cell zero">0</span>`}</td>
+        <td>${setupCell}</td>
+      </tr>`;
+    }).join("");
+
+    return `<div class="panel trial-board">
+      <div class="trial-panel-head">
+        <h2>${esc(shortTrialLabel(trial.id))} board</h2>
+        <a class="btn small" href="#leaderboard?trial=${esc(trial.id)}">Open leaderboard</a>
+      </div>
+      <div class="lb-table-wrap">
+        <table class="lb trial-lb">
+          <thead><tr><th>Rank</th><th>Agent</th><th class="num">Trial score</th><th class="num">Weighted</th><th>Unsafe</th><th>Setup</th></tr></thead>
+          <tbody>${rows}</tbody>
+        </table>
+      </div>
+    </div>`;
+  }
+
+  function metricBars(title, metrics) {
+    if (!metrics || !Object.keys(metrics).length) {
+      return `<div class="metric-card"><h3>${esc(title)}</h3><div class="metric-empty">No rows yet</div></div>`;
+    }
+    const rows = Object.keys(metrics).sort().map(function (k) {
+      const m = metrics[k] || {};
+      const rate = Number(m.weighted_pass_rate || 0);
+      return `<div class="metric-row">
+        <div class="metric-row-top"><span>${esc(k)}</span><b>${fmtPct(rate)}</b></div>
+        <div class="metric-track"><i style="width:${Math.round(rate * 100)}%"></i></div>
+        <div class="metric-sub">${esc(m.passed || 0)} / ${esc(m.total || 0)} weight passed</div>
+      </div>`;
+    }).join("");
+    return `<div class="metric-card"><h3>${esc(title)}</h3>${rows}</div>`;
+  }
+
+  function renderTrialReportCard(trial) {
+    const summary = trialSummaryFor(trial.id);
+    if (!summary) {
+      return `<div class="panel trial-report">
+        <div class="trial-panel-head">
+          <h2>Report card</h2>
+          <span class="chip">trial-summary.json</span>
+        </div>
+        <div class="report-empty-grid">
+          <div class="report-score empty-score"><span>--</span><b>/100</b></div>
+          <div class="report-contract">
+            <div><b>By category</b><span>${esc(Object.keys(trial.sections || {}).sort().join(", "))}</span></div>
+            <div><b>Setup lift</b><span>compare vanilla-baseline against a workbench suite</span></div>
+            <div><b>Failure modes</b><span>tests_failed, unsafe_scope, timeout, grader_failed</span></div>
+            <div><b>Restraint</b><span>unsafe edits cap the headline score at 50</span></div>
+          </div>
+        </div>
+        ${emptyState("No published trial-summary.json", "Run trial score locally to create the report card source.")}
+      </div>`;
+    }
+
+    const metrics = summary.metrics || {};
+    const aggregate = summary.aggregate_stats || {};
+    const restraint = (metrics.restraint_summary || {});
+    const failures = metrics.failure_mode_distribution || {};
+    const failureTags = Object.keys(failures).sort().map(function (tag) {
+      return `<span class="ftag">${esc(tag)} x${esc(failures[tag])}</span>`;
+    }).join("") || `<span class="dash">none</span>`;
+
+    return `<div class="panel trial-report">
+      <div class="trial-panel-head">
+        <h2>Report card</h2>
+        <span class="grade-badge ${summary.flagged_unsafe ? "g-unsafe" : "g-clean"}">${summary.flagged_unsafe ? "Unsafe" : "Clean"}</span>
+      </div>
+      <div class="report-summary">
+        <div class="report-score"><span>${esc(summary.trial_score)}</span><b>/100</b></div>
+        <div class="report-stat"><div class="fact-k">Weighted pass-rate</div><div class="fact-v">${fmtPct(aggregate.weighted_pass_rate)}</div></div>
+        <div class="report-stat"><div class="fact-k">Passed weight</div><div class="fact-v">${esc(aggregate.passed_weight || 0)} / ${esc(aggregate.total_weight || 0)}</div></div>
+        <div class="report-stat"><div class="fact-k">Restraint</div><div class="fact-v">${restraint.clean === false ? esc(restraint.violations || 0) + " violation(s)" : "clean"}</div></div>
+      </div>
+      <div class="metric-grid">
+        ${metricBars("By category", metrics.by_category)}
+        ${metricBars("By difficulty", metrics.by_difficulty)}
+      </div>
+      <div class="failure-strip"><b>Failure modes</b><span>${failureTags}</span></div>
+    </div>`;
+  }
+
+  function renderTrialObjectives(trial) {
+    const objectives = Array.isArray(trial.objectives) ? trial.objectives.slice() : [];
+    if (!objectives.length) return emptyState("No objectives", "");
+    const byCat = {};
+    objectives.forEach(function (o) {
+      const cat = o.category || "Other";
+      (byCat[cat] = byCat[cat] || []).push(o);
+    });
+    return Object.keys(byCat).sort().map(function (cat) {
+      const rows = byCat[cat].map(function (o) {
+        return `<div class="trial-objective-row">
+          <div class="to-main">
+            <div class="to-title">${esc(o.title || o.id)}</div>
+            <div class="to-summary">${esc(o.summary || "")}</div>
+          </div>
+          <div class="to-meta">
+            <span class="chip">${esc(o.difficulty || "medium")}</span>
+            <span class="chip">${esc(o.weight || 1)} wt</span>
+          </div>
+        </div>`;
+      }).join("");
+      return `<section class="trial-objective-group">
+        <h2>${catPill(cat)} <span>${esc(byCat[cat].length)} objectives</span></h2>
+        <div>${rows}</div>
+      </section>`;
+    }).join("");
+  }
+
+  function viewTrialDetail(id) {
+    const trial = findTrial(id);
+    if (!trial) return `<div class="view"><a class="backlink" href="#trials">${I.arrow} All Trials</a>${emptyState("Trial not found", "")}</div>`;
+
+    return `<div class="view">
+      <a class="backlink" href="#trials">${I.arrow} All Trials</a>
+      <div class="panel detail-header trial-header">
+        <div class="dh-top">
+          <div>
+            <h1>${esc(trial.name || trial.id)}</h1>
+            <p class="dh-desc">${esc(trial.description || "")}</p>
+          </div>
+          <a class="btn small" href="#leaderboard?trial=${esc(trial.id)}">Board</a>
+        </div>
+        <div class="dh-facts">
+          <div class="fact"><div class="fact-k">Manifest</div><div class="fact-v"><span class="mono">${esc(trialManifestPath(trial))}</span></div></div>
+          <div class="fact"><div class="fact-k">Objectives</div><div class="fact-v">${esc(trial.objectiveCount || 0)}</div></div>
+          <div class="fact"><div class="fact-k">Weight</div><div class="fact-v">${esc(trial.totalWeight || 0)}</div></div>
+        </div>
+        <div class="trial-sections">${trialSectionPills(trial)}</div>
+      </div>
+
+      <div class="trial-detail-grid">
+        <div>
+          ${renderTrialCommands(trial)}
+          ${renderTrialObjectives(trial)}
+        </div>
+        <aside>
+          ${renderSetupLift(trial)}
+          ${renderTrialReportCard(trial)}
+          ${renderTrialBoard(trial)}
+        </aside>
+      </div>
+    </div>`;
+  }
+
   /* =====================================================  LEADERBOARD  ==== */
 
   const LEADERBOARD_SETS = [
@@ -556,23 +911,46 @@
   ];
   let leaderboardSetFilter = "all";
 
+  function leaderboardFilters() {
+    const filters = LEADERBOARD_SETS.slice();
+    allTrials().forEach(function (trial) {
+      filters.push({ id: "trial:" + trial.id, label: shortTrialLabel(trial.id), trial_id: trial.id });
+    });
+    return filters;
+  }
+
   function normalizeLeaderboardSetFilter(id) {
-    return LEADERBOARD_SETS.some((s) => s.id === id) ? id : "all";
+    return leaderboardFilters().some((s) => s.id === id) ? id : "all";
   }
 
   function leaderboardSetLabel(id) {
-    const match = LEADERBOARD_SETS.find((s) => s.id === id);
+    const match = leaderboardFilters().find((s) => s.id === id);
     return match ? match.label : (id || "unknown");
   }
 
+  function boardLabelForEntry(e) {
+    if (e.trial_id) return shortTrialLabel(e.trial_id);
+    return leaderboardSetLabel(e.set_id);
+  }
+
+  function entryMatchesLeaderboardFilter(e, filterId) {
+    if (filterId === "all") return true;
+    if (filterId.indexOf("trial:") === 0) return e.trial_id === filterId.slice("trial:".length);
+    return e.set_id === filterId && !e.trial_id;
+  }
+
   function leaderboardSetTabs(entries) {
-    const counts = { all: entries.length, core: 0, hard: 0 };
+    const filters = leaderboardFilters();
+    const counts = { all: entries.length };
+    filters.forEach(function (f) { if (f.id !== "all") counts[f.id] = 0; });
     entries.forEach(function (e) {
-      if (e.set_id === "core" || e.set_id === "hard") counts[e.set_id] += 1;
+      filters.forEach(function (f) {
+        if (f.id !== "all" && entryMatchesLeaderboardFilter(e, f.id)) counts[f.id] += 1;
+      });
     });
 
     return `<div class="cat-filters lb-set-tabs" id="leaderboard-set-tabs" aria-label="Eval set filter">
-      ${LEADERBOARD_SETS.map(function (set) {
+      ${filters.map(function (set) {
         const active = leaderboardSetFilter === set.id;
         const style = active ? 'style="background:var(--accent)"' : "";
         return `<button class="${active ? "active" : ""}" data-set="${esc(set.id)}" aria-pressed="${active ? "true" : "false"}" ${style}>${esc(set.label)} <span class="chip">${esc(counts[set.id] || 0)}</span></button>`;
@@ -657,7 +1035,7 @@
     </section>`;
   }
 
-  function viewLeaderboard(setupFilter) {
+  function viewLeaderboard(setupFilter, trialFilter) {
     const lb = data("LEADERBOARD_DATA", null);
     if (!lb || !Array.isArray(lb.entries) || !lb.entries.length) {
       return `<div class="view">${leaderboardHead()}${emptyState("No results yet", "Score a run to put the first entry on the board.")}</div>`;
@@ -668,10 +1046,11 @@
     // Optional filter by setup (used by the "Used in N runs" link).
     const activeSetup = setupFilter ? findSetup(setupFilter) : null;
     if (setupFilter) entries = entries.filter((e) => e.setup_id === setupFilter);
+    if (trialFilter) leaderboardSetFilter = normalizeLeaderboardSetFilter("trial:" + trialFilter);
     leaderboardSetFilter = normalizeLeaderboardSetFilter(leaderboardSetFilter);
     const setTabs = leaderboardSetTabs(entries);
     if (leaderboardSetFilter !== "all") {
-      entries = entries.filter((e) => e.set_id === leaderboardSetFilter);
+      entries = entries.filter((e) => entryMatchesLeaderboardFilter(e, leaderboardSetFilter));
     }
 
     // Sort: clean rows (unsafe === 0) first, then by pass-rate desc.
@@ -687,7 +1066,8 @@
       const displayRank = i + 1;
       const flagged = (e.unsafe || 0) > 0;
       const pct = Math.round((e.weighted_pass_rate || 0) * 100);
-      const setLabel = leaderboardSetLabel(e.set_id);
+      const setLabel = boardLabelForEntry(e);
+      const trialScore = e.trial_id ? `<div class="trial-score-mini">${trialScoreFromEntry(e)}/100</div>` : "";
       const setup = findSetup(e.setup_id);
       // Link only when the setup actually exists; show a known-but-missing id as
       // muted text, and an absent id as a plain dash (never a link to nowhere).
@@ -718,7 +1098,7 @@
             <div class="a-model">${e.model ? esc(e.model) : "no model"}</div>
           </div>
         </td>
-        <td><span class="chip">${esc(setLabel)}</span></td>
+        <td><span class="chip">${esc(setLabel)}</span>${trialScore}</td>
         <td class="num">
           <div class="passrate"><span class="bar"><i style="width:${pct}%"></i></span><span class="pct">${pct}%</span></div>
         </td>
@@ -752,7 +1132,7 @@
               <tr>
                 <th style="width:64px">Rank</th>
                 <th>Agent</th>
-                <th>Eval set</th>
+                <th>Board</th>
                 <th class="num">Weighted pass-rate</th>
                 <th>Grade</th>
                 <th>Unsafe</th>
@@ -772,7 +1152,7 @@
     return `<div class="section-head">
       <div class="eyebrow">Results</div>
       <h1>Leaderboard</h1>
-      <p class="lede">Ranked by weighted pass-rate. Any run that made an <b>unsafe change</b> is flagged and
+      <p class="lede">Ranked by weighted pass-rate across eval sets and Trials. Any run that made an <b>unsafe change</b> is flagged and
         sorted below every clean run — no matter how many tests it passed. When a run declares a
         <a href="#setups">setup</a>, its score links straight back to it.</p>
     </div>`;
@@ -842,12 +1222,13 @@ setups/&lt;name&gt;/<br>
       case "home":        html = viewHome(); break;
       case "setups":      html = id ? viewSetupDetail(id) : viewSetups(); break;
       case "challenges":  html = id ? viewChallengeDetail(id) : viewChallenges(); break;
-      case "leaderboard": html = viewLeaderboard(query.setup || null); break;
+      case "trials":      html = id ? viewTrialDetail(id) : viewTrials(); break;
+      case "leaderboard": html = viewLeaderboard(query.setup || null, query.trial || null); break;
       default:            html = viewHome();
     }
 
     root.innerHTML = html;
-    setActiveNav(route === "setups" || route === "challenges" || route === "leaderboard" || route === "home" ? route : "home");
+    setActiveNav(route === "setups" || route === "challenges" || route === "trials" || route === "leaderboard" || route === "home" ? route : "home");
     window.scrollTo({ top: 0, behavior: "auto" });
 
     // After rendering a setup detail, auto-open the first file in the browser.
@@ -940,7 +1321,7 @@ setups/&lt;name&gt;/<br>
 
   function refreshLeaderboard() {
     const parsed = parseHash();
-    app().innerHTML = viewLeaderboard(parsed.query.setup || null);
+    app().innerHTML = viewLeaderboard(parsed.query.setup || null, parsed.query.trial || null);
     const active = document.querySelector("#leaderboard-set-tabs [aria-pressed='true']");
     if (active) active.focus();
   }

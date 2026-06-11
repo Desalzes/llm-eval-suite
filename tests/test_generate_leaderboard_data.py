@@ -66,6 +66,17 @@ def test_unattributed_entry_is_skipped(tmp_path):
     assert data["count"] == 1
 
 
+def test_trial_entries_preserve_headline_trial_score(tmp_path):
+    entry = _entry("trial-run", 0.76)
+    entry["trial_id"] = "trial-1"
+    entry["trial_score"] = 76
+    _write(tmp_path, "trial-run", entry)
+    data = gen.build_leaderboard_data(tmp_path)
+    row = data["entries"][0]
+    assert row["trial_id"] == "trial-1"
+    assert row["trial_score"] == 76
+
+
 def test_real_entries_all_declare_a_setup():
     """Guard: every shipped leaderboard entry must declare the setup that produced it."""
     entries_dir = ROOT / "leaderboard" / "entries"
