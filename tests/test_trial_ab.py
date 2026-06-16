@@ -103,3 +103,12 @@ def test_render_ab_strip_svg_escapes_user_text():
     assert "<script>" not in svg
     assert "&amp;" in svg          # the & in trial id was escaped
     assert "&amp;amp;" not in svg  # but not double-escaped
+
+
+def test_trial_ab_schema_validates_output():
+    schema = json.loads((ROOT / "schemas" / "trial-ab.schema.json").read_text(encoding="utf-8"))
+    ab = run.compute_trial_ab(_summary(score=64),
+                              _summary(setup_id="ponytail", score=61))
+    ab["generated_at"] = "20260615T000000Z"
+    assert run.lightweight_validate(ab, schema) == []
+    assert run.lightweight_validate({"schema": "trial-ab/v1"}, schema) != []
