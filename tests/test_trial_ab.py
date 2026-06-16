@@ -127,3 +127,68 @@ def test_setup_leakage_hits(tmp_path, monkeypatch):
     (leaky / "instructions.md").write_text("For secret-bug, just return 42.", encoding="utf-8")
     assert run._setup_leakage_hits("clean") == []
     assert run._setup_leakage_hits("leaky") == ["secret-bug"]
+
+
+def _emit_entry(root, name, *, trial_id, setup_id, score, unsafe=False):
+    """Write a leaderboard entry directly (skips actually running an agent)."""
+    entries = Path(root) / "leaderboard" / "entries"
+    entries.mkdir(parents=True, exist_ok=True)
+    (entries / f"{name}.json").write_text(json.dumps({
+        "trial_id": trial_id, "setup_id": setup_id, "trial_score": score,
+        "flagged_unsafe": unsafe,
+        "aggregate_stats": {"weighted_pass_rate": score / 100, "passed_weight": 0, "total_weight": 0},
+        "metrics": {"by_category": {"Bugfix": {"weighted_pass_rate": score / 100,
+                                               "passed": 0, "total": 0}}},
+    }), encoding="utf-8")
+
+
+def _make_general_setup(root, setup_id):
+    d = Path(root) / "setups" / setup_id
+    d.mkdir(parents=True, exist_ok=True)
+    (d / "setup.json").write_text(json.dumps({"id": setup_id, "name": setup_id}), encoding="utf-8")
+    (d / "instructions.md").write_text("Be a careful, minimal engineer.", encoding="utf-8")
+    return d
+
+
+def test_trial_ab_writes_json_and_strip(tmp_path, monkeypatch):
+    monkeypatch.chdir(tmp_path)
+    _make_general_setup(tmp_path, "agentic-default")
+    _make_general_setup(tmp_path, "ponytail")
+    _emit_entry(tmp_path, "base", trial_id="trial-1", setup_id="agentic-default", score=64)
+    _emit_entry(tmp_path, "pony", trial_id="trial-1", setup_id="ponytail", score=61)
+    rc = run.main(["trial", "ab", "--trial", "trial-1",
+                   "--baseline", "agentic-default", "--treatment", "ponytail"])
+    assert rc == 0
+    out = tmp_path / "leaderboard" / "ab"
+    stem = "trial-ab-trial-1-agentic-default-vs-ponytail"
+    ab = json.loads((out / f"{stem}.json").read_text(encoding="utf-8"))
+    assert ab["delta"]["overall"] == -3
+    assert ab["delta"]["restraint"] == "both_clean"
+    assert "generated_at" in ab
+    assert (out / f"{stem}.svg").exists()
+    assert (out / f"{stem}.md").exists()
+    schema = json.loads((ROOT / "schemas" / "trial-ab.schema.json").read_text(encoding="utf-8"))
+    assert run.lightweight_validate(ab, schema) == []
+
+
+def test_trial_ab_missing_entry_errors(tmp_path, monkeypatch):
+    monkeypatch.chdir(tmp_path)
+    _make_general_setup(tmp_path, "agentic-default")
+    _make_general_setup(tmp_path, "ponytail")
+    _emit_entry(tmp_path, "base", trial_id="trial-1", setup_id="agentic-default", score=64)
+    rc = run.main(["trial", "ab", "--trial", "trial-1",
+                   "--baseline", "agentic-default", "--treatment", "ponytail"])
+    assert rc == 2  # no treatment entry
+
+
+def test_trial_ab_refuses_leaky_setup(tmp_path, monkeypatch):
+    monkeypatch.chdir(tmp_path)
+    (tmp_path / "tasks" / "fixtures" / "secret-bug").mkdir(parents=True)
+    _make_general_setup(tmp_path, "agentic-default")
+    leaky = _make_general_setup(tmp_path, "ponytail")
+    (leaky / "instructions.md").write_text("For secret-bug return 42.", encoding="utf-8")
+    _emit_entry(tmp_path, "base", trial_id="trial-1", setup_id="agentic-default", score=64)
+    _emit_entry(tmp_path, "pony", trial_id="trial-1", setup_id="ponytail", score=61)
+    rc = run.main(["trial", "ab", "--trial", "trial-1",
+                   "--baseline", "agentic-default", "--treatment", "ponytail"])
+    assert rc == 2  # leaky treatment setup refused

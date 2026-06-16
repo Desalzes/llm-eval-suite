@@ -613,6 +613,60 @@ def cmd_trial_score(args) -> int:
     return 0
 
 
+def _find_ab_entry(trial_id: str, setup_id: str, entries_dir: Path):
+    """Latest leaderboard entry matching (trial_id, setup_id). Returns (data, count)."""
+    matches = []
+    if entries_dir.is_dir():
+        for f in sorted(entries_dir.glob("*.json")):
+            try:
+                data = load_json(f)
+            except (OSError, json.JSONDecodeError):
+                continue
+            if data.get("trial_id") == trial_id and data.get("setup_id") == setup_id:
+                matches.append((f.stat().st_mtime, data))
+    if not matches:
+        return None, 0
+    matches.sort(key=lambda m: m[0])
+    return matches[-1][1], len(matches)
+
+
+def cmd_trial_ab(args) -> int:
+    entries_dir = Path("leaderboard") / "entries"
+    # Fairness gate: both setups must exist (id match) AND carry no task-specific hints.
+    for setup in (args.baseline, args.treatment):
+        if _validate_setup(setup) != 0:
+            return 2
+        hits = _setup_leakage_hits(setup)
+        if hits:
+            print(f"error: setup '{setup}' mentions challenge id(s) {hits}; "
+                  "an A/B setup must be general (no task-specific hints).", file=sys.stderr)
+            return 2
+    b_data, b_n = _find_ab_entry(args.trial, args.baseline, entries_dir)
+    t_data, t_n = _find_ab_entry(args.trial, args.treatment, entries_dir)
+    for setup, data in ((args.baseline, b_data), (args.treatment, t_data)):
+        if data is None:
+            print(f"error: no leaderboard entry for trial '{args.trial}' + setup "
+                  f"'{setup}'. Run: python run.py trial score <trial.json> "
+                  f"--setup {setup} --emit-entry <name>", file=sys.stderr)
+            return 2
+    if b_n > 1 or t_n > 1:
+        print(f"note: multiple entries found (baseline {b_n}, treatment {t_n}); "
+              "using the latest of each (median across runs is deferred).")
+    ab = compute_trial_ab(b_data, t_data, runs_per_arm=1)
+    ab["generated_at"] = new_run_id()
+    out_dir = Path("leaderboard") / "ab"
+    out_dir.mkdir(parents=True, exist_ok=True)
+    stem = f"trial-ab-{args.trial}-{args.baseline}-vs-{args.treatment}"
+    (out_dir / f"{stem}.json").write_text(json.dumps(ab, indent=2), encoding="utf-8")
+    print(f"  wrote {(out_dir / (stem + '.json')).as_posix()}")
+    if not args.no_strip:
+        (out_dir / f"{stem}.svg").write_text(render_ab_strip_svg(ab), encoding="utf-8")
+        (out_dir / f"{stem}.md").write_text(render_ab_strip_markdown(ab) + "\n", encoding="utf-8")
+        print(f"  wrote {(out_dir / (stem + '.svg')).as_posix()}")
+    print(render_ab_strip_markdown(ab))
+    return 0
+
+
 def _validate_setup(setup: str) -> int:
     """0 if setups/<setup>/setup.json exists and its id matches; else 2 (+ prints why)."""
     setup_file = Path("setups") / setup / "setup.json"
@@ -1030,6 +1084,13 @@ def build_parser() -> argparse.ArgumentParser:
                           help="setup id that produced this result (REQUIRED with --emit-entry)")
     tr_score.add_argument("--emit-entry", dest="emit_entry")
     tr_score.set_defaults(func=cmd_trial_score)
+
+    tr_ab = tr_sub.add_parser("ab", help="pair a baseline vs +skill Trial run -> delta + shareable strip")
+    tr_ab.add_argument("--trial", required=True, help="trial id (e.g. trial-1)")
+    tr_ab.add_argument("--baseline", required=True, help="baseline setup id (arm A)")
+    tr_ab.add_argument("--treatment", required=True, help="setup id of baseline + the skill (arm B)")
+    tr_ab.add_argument("--no-strip", action="store_true", help="skip the SVG/markdown strip")
+    tr_ab.set_defaults(func=cmd_trial_ab)
 
     return p
 
