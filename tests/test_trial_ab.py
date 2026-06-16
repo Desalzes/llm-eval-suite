@@ -209,3 +209,21 @@ def test_emit_line_survives_stream_without_encoding(monkeypatch):
         def write(self, s): self.buf.write(s.encode("ascii"))  # only ascii is writable
     monkeypatch.setattr(run.sys, "stdout", _NoEnc())
     run._emit_line("A/B · trial-1 · ponytail 64 → 61 (−3) · both clean · n=1")  # must not raise
+
+
+def test_ponytail_setup_is_valid_and_general():
+    # Runs against the real repo root: the shipped ponytail setup must exist,
+    # match its id, and contain no fixture-id leakage.
+    setup = json.loads((ROOT / "setups" / "ponytail" / "setup.json").read_text(encoding="utf-8"))
+    assert setup["id"] == "ponytail"
+    assert setup["instructions_file"] == "instructions.md"
+    assert (ROOT / "setups" / "ponytail" / setup["instructions_file"]).exists()
+    assert (ROOT / "setups" / "ponytail" / "SOURCE.md").exists()
+    import os
+    cwd = os.getcwd()
+    try:
+        os.chdir(ROOT)
+        assert run._validate_setup("ponytail") == 0
+        assert run._setup_leakage_hits("ponytail") == []
+    finally:
+        os.chdir(cwd)
