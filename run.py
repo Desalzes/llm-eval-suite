@@ -635,7 +635,7 @@ def _emit_line(text: str) -> None:
     try:
         print(text)
     except UnicodeEncodeError:
-        enc = getattr(sys.stdout, "encoding", None) or "utf-8"
+        enc = getattr(sys.stdout, "encoding", None) or "ascii"
         sys.stdout.write(text.encode(enc, "replace").decode(enc) + "\n")
 
 

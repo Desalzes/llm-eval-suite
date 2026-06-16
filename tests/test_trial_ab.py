@@ -199,3 +199,13 @@ def test_emit_line_survives_narrow_console(monkeypatch):
     narrow = io.TextIOWrapper(io.BytesIO(), encoding="ascii", errors="strict", newline="")
     monkeypatch.setattr(run.sys, "stdout", narrow)
     run._emit_line("A/B · trial-1 · ponytail 64 → 61 (−3) · both clean · n=1")  # must not raise
+
+
+def test_emit_line_survives_stream_without_encoding(monkeypatch):
+    import io
+    class _NoEnc:
+        encoding = None
+        def __init__(self): self.buf = io.BytesIO()
+        def write(self, s): self.buf.write(s.encode("ascii"))  # only ascii is writable
+    monkeypatch.setattr(run.sys, "stdout", _NoEnc())
+    run._emit_line("A/B · trial-1 · ponytail 64 → 61 (−3) · both clean · n=1")  # must not raise
