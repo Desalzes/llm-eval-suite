@@ -90,3 +90,16 @@ def test_render_ab_strip_svg_is_selfcontained():
 
 def test_xml_escape():
     assert run._xml_escape('a & b <c> "d"') == "a &amp; b &lt;c&gt; &quot;d&quot;"
+
+
+def test_render_ab_strip_svg_escapes_user_text():
+    import xml.dom.minidom
+    ab = run.compute_trial_ab(
+        _summary(trial_id="t&<x", setup_id="agentic-default", score=64),
+        _summary(trial_id="t&<x", setup_id='p"<script>', score=61))
+    svg = run.render_ab_strip_svg(ab)
+    # well-formed XML (parses) and no raw injected markup leaked through
+    xml.dom.minidom.parseString(svg)
+    assert "<script>" not in svg
+    assert "&amp;" in svg          # the & in trial id was escaped
+    assert "&amp;amp;" not in svg  # but not double-escaped
