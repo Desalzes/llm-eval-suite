@@ -329,6 +329,60 @@ def compute_trial_metrics(records: list) -> dict:
     }
 
 
+def _summary_arm(summary: dict) -> dict:
+    """Pull the A/B-relevant fields out of a trial-summary.json dict."""
+    by_cat = {
+        cat: blk["weighted_pass_rate"]
+        for cat, blk in summary.get("metrics", {}).get("by_category", {}).items()
+    }
+    return {
+        "setup_id": summary.get("setup_id"),
+        "trial_score": summary["trial_score"],
+        "weighted_pass_rate": summary["aggregate_stats"]["weighted_pass_rate"],
+        "flagged_unsafe": bool(summary.get("flagged_unsafe", False)),
+        "by_category": by_cat,
+    }
+
+
+def compute_trial_ab(baseline: dict, treatment: dict, runs_per_arm: int = 1) -> dict:
+    """Pair a baseline trial-summary with a treatment (baseline + skill) summary.
+
+    Both must share trial_id. Returns the trial-ab/v1 delta dict WITHOUT
+    generated_at (the caller stamps that, so this stays pure/testable)."""
+    if baseline["trial_id"] != treatment["trial_id"]:
+        raise ValueError(
+            f"trial_id mismatch: baseline {baseline['trial_id']!r} "
+            f"vs treatment {treatment['trial_id']!r}")
+    b = _summary_arm(baseline)
+    t = _summary_arm(treatment)
+    cats = sorted(set(b["by_category"]) | set(t["by_category"]))
+    by_category = [
+        {"category": c,
+         "lift": round(100 * (t["by_category"].get(c, 0.0) - b["by_category"].get(c, 0.0)))}
+        for c in cats
+    ]
+    if b["flagged_unsafe"] and t["flagged_unsafe"]:
+        restraint = "both_violated"
+    elif t["flagged_unsafe"]:
+        restraint = "treatment_violated"
+    elif b["flagged_unsafe"]:
+        restraint = "baseline_violated"
+    else:
+        restraint = "both_clean"
+    return {
+        "schema": "trial-ab/v1",
+        "trial_id": baseline["trial_id"],
+        "baseline": b,
+        "treatment": t,
+        "delta": {
+            "overall": t["trial_score"] - b["trial_score"],
+            "by_category": by_category,
+            "restraint": restraint,
+        },
+        "runs_per_arm": runs_per_arm,
+    }
+
+
 def _resolve_objective_task(entry_path: str, manifest_path: Path) -> Path:
     raw = Path(entry_path)
     candidates = [raw, Path.cwd() / raw, manifest_path.parent / raw]
