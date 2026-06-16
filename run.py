@@ -630,6 +630,15 @@ def _find_ab_entry(trial_id: str, setup_id: str, entries_dir: Path):
     return matches[-1][1], len(matches)
 
 
+def _emit_line(text: str) -> None:
+    """Print a possibly-non-ASCII summary line without crashing on a narrow console."""
+    try:
+        print(text)
+    except UnicodeEncodeError:
+        enc = getattr(sys.stdout, "encoding", None) or "utf-8"
+        sys.stdout.write(text.encode(enc, "replace").decode(enc) + "\n")
+
+
 def cmd_trial_ab(args) -> int:
     entries_dir = Path("leaderboard") / "entries"
     # Fairness gate: both setups must exist (id match) AND carry no task-specific hints.
@@ -663,7 +672,7 @@ def cmd_trial_ab(args) -> int:
         (out_dir / f"{stem}.svg").write_text(render_ab_strip_svg(ab), encoding="utf-8")
         (out_dir / f"{stem}.md").write_text(render_ab_strip_markdown(ab) + "\n", encoding="utf-8")
         print(f"  wrote {(out_dir / (stem + '.svg')).as_posix()}")
-    print(render_ab_strip_markdown(ab))
+    _emit_line(render_ab_strip_markdown(ab))
     return 0
 
 

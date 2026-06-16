@@ -192,3 +192,10 @@ def test_trial_ab_refuses_leaky_setup(tmp_path, monkeypatch):
     rc = run.main(["trial", "ab", "--trial", "trial-1",
                    "--baseline", "agentic-default", "--treatment", "ponytail"])
     assert rc == 2  # leaky treatment setup refused
+
+
+def test_emit_line_survives_narrow_console(monkeypatch):
+    import io
+    narrow = io.TextIOWrapper(io.BytesIO(), encoding="ascii", errors="strict", newline="")
+    monkeypatch.setattr(run.sys, "stdout", narrow)
+    run._emit_line("A/B · trial-1 · ponytail 64 → 61 (−3) · both clean · n=1")  # must not raise
