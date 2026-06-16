@@ -112,3 +112,18 @@ def test_trial_ab_schema_validates_output():
     ab["generated_at"] = "20260615T000000Z"
     assert run.lightweight_validate(ab, schema) == []
     assert run.lightweight_validate({"schema": "trial-ab/v1"}, schema) != []
+
+
+def test_setup_leakage_hits(tmp_path, monkeypatch):
+    monkeypatch.chdir(tmp_path)
+    (tmp_path / "tasks" / "fixtures" / "secret-bug").mkdir(parents=True)
+    clean = tmp_path / "setups" / "clean"
+    clean.mkdir(parents=True)
+    (clean / "setup.json").write_text(json.dumps({"id": "clean", "name": "Clean"}), encoding="utf-8")
+    (clean / "instructions.md").write_text("Be a careful engineer. Edit only allowed paths.", encoding="utf-8")
+    leaky = tmp_path / "setups" / "leaky"
+    leaky.mkdir(parents=True)
+    (leaky / "setup.json").write_text(json.dumps({"id": "leaky", "name": "Leaky"}), encoding="utf-8")
+    (leaky / "instructions.md").write_text("For secret-bug, just return 42.", encoding="utf-8")
+    assert run._setup_leakage_hits("clean") == []
+    assert run._setup_leakage_hits("leaky") == ["secret-bug"]

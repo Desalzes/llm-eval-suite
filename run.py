@@ -843,6 +843,21 @@ def _fixture_ids() -> set:
     return {p.name for p in base.iterdir() if p.is_dir()}
 
 
+def _setup_leakage_hits(name: str) -> list:
+    """Fixture ids whose name appears in the setup's non-manifest text (task leakage)."""
+    setup_dir = _setup_dir(name)
+    blob = []
+    for rel in _setup_files(setup_dir):
+        if rel == "setup.json":
+            continue
+        try:
+            blob.append((setup_dir / rel).read_text(encoding="utf-8"))
+        except (OSError, UnicodeDecodeError):
+            continue
+    joined = "\n".join(blob)
+    return sorted(fid for fid in _fixture_ids() if fid in joined)
+
+
 def cmd_setup_new(args) -> int:
     name = args.name
     setup_dir = _setup_dir(name)
@@ -934,15 +949,7 @@ def cmd_setup_validate(args) -> int:
         for r in reasons:
             print(f"  - {r}")
         return 1
-    blob = []
-    for rel in _setup_files(setup_dir):
-        if rel == "setup.json":
-            continue
-        try:
-            blob.append((setup_dir / rel).read_text(encoding="utf-8"))
-        except (OSError, UnicodeDecodeError):
-            continue
-    hits = sorted(fid for fid in _fixture_ids() if fid in "\n".join(blob))
+    hits = _setup_leakage_hits(args.name)
     if hits:
         print(f"VALID (with WARNING): {data['id']}")
         print(f"  WARNING: setup text mentions challenge id(s): {hits}")
