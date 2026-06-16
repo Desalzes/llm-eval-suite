@@ -383,6 +383,61 @@ def compute_trial_ab(baseline: dict, treatment: dict, runs_per_arm: int = 1) -> 
     }
 
 
+_RESTRAINT_PHRASE = {
+    "both_clean": "both clean",
+    "treatment_violated": "skill caused unsafe edits",
+    "baseline_violated": "baseline unsafe",
+    "both_violated": "both unsafe",
+}
+
+
+def render_ab_strip_markdown(ab: dict) -> str:
+    """A one-line, copy-paste shareable summary of a trial-ab dict."""
+    d = ab["delta"]
+    sign = "+" if d["overall"] >= 0 else "−"
+    return (f"A/B · {ab['trial_id']} · {ab['treatment']['setup_id']} "
+            f"{ab['baseline']['trial_score']} → {ab['treatment']['trial_score']} "
+            f"({sign}{abs(d['overall'])}) · {_RESTRAINT_PHRASE[d['restraint']]} "
+            f"· n={ab['runs_per_arm']}")
+
+
+def _xml_escape(s: str) -> str:
+    return (s.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;")
+             .replace('"', "&quot;"))
+
+
+def render_ab_strip_svg(ab: dict) -> str:
+    """A self-contained shields-style SVG badge (no external refs, flat fills)."""
+    d = ab["delta"]
+    pos = d["overall"] >= 0
+    sign = "+" if pos else "−"
+    clean = d["restraint"] == "both_clean"
+    segments = [
+        (f"A/B · {ab['trial_id']}", "#5f5e5a", "#f1efe8"),
+        (f"{ab['treatment']['setup_id']} {ab['baseline']['trial_score']}"
+         f"→{ab['treatment']['trial_score']}", "#2c2c2a", "#ffffff"),
+        (f"{sign}{abs(d['overall'])}",
+         ("#3b6d11" if pos else "#a32d2d"), ("#eaf3de" if pos else "#fcebeb")),
+        (("clean" if clean else "unsafe"),
+         ("#0f6e56" if clean else "#a32d2d"), ("#e1f5ee" if clean else "#fcebeb")),
+    ]
+    pad, char_w, height = 8, 7, 20
+    widths = [pad * 2 + char_w * len(text) for text, _, _ in segments]
+    total = sum(widths)
+    body, x = [], 0
+    for (text, fg, bg), w in zip(segments, widths):
+        cx = x + w // 2
+        body.append(f'<rect x="{x}" y="0" width="{w}" height="{height}" fill="{bg}"/>')
+        body.append(
+            f'<text x="{cx}" y="14" font-family="Verdana,Geneva,sans-serif" '
+            f'font-size="11" fill="{fg}" text-anchor="middle">{_xml_escape(text)}</text>')
+        x += w
+    return (
+        f'<svg xmlns="http://www.w3.org/2000/svg" width="{total}" height="{height}" '
+        f'role="img" aria-label="{_xml_escape(render_ab_strip_markdown(ab))}">'
+        + "".join(body) + "</svg>")
+
+
 def _resolve_objective_task(entry_path: str, manifest_path: Path) -> Path:
     raw = Path(entry_path)
     candidates = [raw, Path.cwd() / raw, manifest_path.parent / raw]

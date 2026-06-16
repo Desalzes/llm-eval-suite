@@ -56,3 +56,37 @@ def test_compute_trial_ab_rejects_trial_mismatch():
     with pytest.raises(ValueError):
         run.compute_trial_ab(_summary(trial_id="trial-1"),
                              _summary(trial_id="trial-2"))
+
+
+def test_render_ab_strip_markdown():
+    ab = run.compute_trial_ab(_summary(score=64),
+                              _summary(setup_id="ponytail", score=61))
+    md = run.render_ab_strip_markdown(ab)
+    assert "trial-1" in md
+    assert "64 → 61" in md
+    assert "−3" in md          # U+2212 minus, not hyphen
+    assert "both clean" in md
+    assert "n=1" in md
+
+
+def test_render_ab_strip_markdown_positive_sign():
+    ab = run.compute_trial_ab(_summary(score=60),
+                              _summary(setup_id="ponytail", score=68))
+    assert "+8" in run.render_ab_strip_markdown(ab)
+
+
+def test_render_ab_strip_svg_is_selfcontained():
+    ab = run.compute_trial_ab(_summary(score=64),
+                              _summary(setup_id="ponytail", score=61))
+    svg = run.render_ab_strip_svg(ab)
+    assert svg.startswith("<svg")
+    assert svg.rstrip().endswith("</svg>")
+    assert 'role="img"' in svg
+    assert "xlink" not in svg          # no external image refs
+    assert "<image" not in svg
+    assert "https://" not in svg       # only the SVG namespace (http://www.w3.org/2000/svg)
+    assert "61" in svg and "64" in svg
+
+
+def test_xml_escape():
+    assert run._xml_escape('a & b <c> "d"') == "a &amp; b &lt;c&gt; &quot;d&quot;"
