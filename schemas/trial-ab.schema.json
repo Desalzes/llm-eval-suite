@@ -1,0 +1,14 @@
+{
+  "type": "object",
+  "required": ["schema", "trial_id", "baseline", "treatment", "delta", "runs_per_arm", "generated_at"],
+  "properties": {
+    "schema": { "type": "string" },
+    "trial_id": { "type": "string" },
+    "baseline": { "type": "object" },
+    "treatment": { "type": "object" },
+    "delta": { "type": "object" },
+    "runs_per_arm": { "type": "integer" },
+    "generated_at": { "type": "string" }
+  },
+  "additionalProperties": true
+}

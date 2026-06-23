@@ -329,6 +329,115 @@ def compute_trial_metrics(records: list) -> dict:
     }
 
 
+def _summary_arm(summary: dict) -> dict:
+    """Pull the A/B-relevant fields out of a trial-summary.json dict."""
+    by_cat = {
+        cat: blk["weighted_pass_rate"]
+        for cat, blk in summary.get("metrics", {}).get("by_category", {}).items()
+    }
+    return {
+        "setup_id": summary.get("setup_id"),
+        "trial_score": summary["trial_score"],
+        "weighted_pass_rate": summary["aggregate_stats"]["weighted_pass_rate"],
+        "flagged_unsafe": bool(summary.get("flagged_unsafe", False)),
+        "by_category": by_cat,
+    }
+
+
+def compute_trial_ab(baseline: dict, treatment: dict, runs_per_arm: int = 1) -> dict:
+    """Pair a baseline trial-summary with a treatment (baseline + skill) summary.
+
+    Both must share trial_id. Returns the trial-ab/v1 delta dict WITHOUT
+    generated_at (the caller stamps that, so this stays pure/testable)."""
+    if baseline["trial_id"] != treatment["trial_id"]:
+        raise ValueError(
+            f"trial_id mismatch: baseline {baseline['trial_id']!r} "
+            f"vs treatment {treatment['trial_id']!r}")
+    b = _summary_arm(baseline)
+    t = _summary_arm(treatment)
+    cats = sorted(set(b["by_category"]) | set(t["by_category"]))
+    by_category = [
+        {"category": c,
+         "lift": round(100 * (t["by_category"].get(c, 0.0) - b["by_category"].get(c, 0.0)))}
+        for c in cats
+    ]
+    if b["flagged_unsafe"] and t["flagged_unsafe"]:
+        restraint = "both_violated"
+    elif t["flagged_unsafe"]:
+        restraint = "treatment_violated"
+    elif b["flagged_unsafe"]:
+        restraint = "baseline_violated"
+    else:
+        restraint = "both_clean"
+    return {
+        "schema": "trial-ab/v1",
+        "trial_id": baseline["trial_id"],
+        "baseline": b,
+        "treatment": t,
+        "delta": {
+            "overall": t["trial_score"] - b["trial_score"],
+            "by_category": by_category,
+            "restraint": restraint,
+        },
+        "runs_per_arm": runs_per_arm,
+    }
+
+
+_RESTRAINT_PHRASE = {
+    "both_clean": "both clean",
+    "treatment_violated": "skill caused unsafe edits",
+    "baseline_violated": "baseline unsafe",
+    "both_violated": "both unsafe",
+}
+
+
+def render_ab_strip_markdown(ab: dict) -> str:
+    """A one-line, copy-paste shareable summary of a trial-ab dict."""
+    d = ab["delta"]
+    sign = "+" if d["overall"] >= 0 else "−"
+    return (f"A/B · {ab['trial_id']} · {ab['treatment']['setup_id']} "
+            f"{ab['baseline']['trial_score']} → {ab['treatment']['trial_score']} "
+            f"({sign}{abs(d['overall'])}) · {_RESTRAINT_PHRASE[d['restraint']]} "
+            f"· n={ab['runs_per_arm']}")
+
+
+def _xml_escape(s: str) -> str:
+    return (s.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;")
+             .replace('"', "&quot;"))
+
+
+def render_ab_strip_svg(ab: dict) -> str:
+    """A self-contained shields-style SVG badge (no external refs, flat fills)."""
+    d = ab["delta"]
+    pos = d["overall"] >= 0
+    sign = "+" if pos else "−"
+    clean = d["restraint"] == "both_clean"
+    segments = [
+        (f"A/B · {ab['trial_id']}", "#5f5e5a", "#f1efe8"),
+        (f"{ab['treatment']['setup_id']} {ab['baseline']['trial_score']}"
+         f"→{ab['treatment']['trial_score']}", "#2c2c2a", "#ffffff"),
+        (f"{sign}{abs(d['overall'])}",
+         ("#3b6d11" if pos else "#a32d2d"), ("#eaf3de" if pos else "#fcebeb")),
+        (("clean" if clean else "unsafe"),
+         ("#0f6e56" if clean else "#a32d2d"), ("#e1f5ee" if clean else "#fcebeb")),
+    ]
+    pad, char_w, height = 8, 7, 20
+    widths = [pad * 2 + char_w * len(text) for text, _, _ in segments]
+    total = sum(widths)
+    body, x = [], 0
+    for (text, fg, bg), w in zip(segments, widths):
+        cx = x + w // 2
+        body.append(f'<rect x="{x}" y="0" width="{w}" height="{height}" fill="{bg}"/>')
+        body.append(
+            f'<text x="{cx}" y="14" font-family="Verdana,Geneva,sans-serif" '
+            f'font-size="11" fill="{fg}" text-anchor="middle">{_xml_escape(text)}</text>')
+        x += w
+    return (
+        f'<svg xmlns="http://www.w3.org/2000/svg" width="{total}" height="{height}" '
+        f'role="img" aria-label="{_xml_escape(render_ab_strip_markdown(ab))}">'
+        + "".join(body) + "</svg>")
+
+
 def _resolve_objective_task(entry_path: str, manifest_path: Path) -> Path:
     raw = Path(entry_path)
     candidates = [raw, Path.cwd() / raw, manifest_path.parent / raw]
@@ -501,6 +610,69 @@ def cmd_trial_score(args) -> int:
           f"- unsafe {status_counts.get('unsafe', 0)} [{mark}]")
     print(f"  status_counts: {status_counts}")
     print(f"  wrote {(trial_run_dir / 'trial-summary.json').as_posix()}")
+    return 0
+
+
+def _find_ab_entry(trial_id: str, setup_id: str, entries_dir: Path):
+    """Latest leaderboard entry matching (trial_id, setup_id). Returns (data, count)."""
+    matches = []
+    if entries_dir.is_dir():
+        for f in sorted(entries_dir.glob("*.json")):
+            try:
+                data = load_json(f)
+            except (OSError, json.JSONDecodeError):
+                continue
+            if data.get("trial_id") == trial_id and data.get("setup_id") == setup_id:
+                matches.append((f.stat().st_mtime, data))
+    if not matches:
+        return None, 0
+    matches.sort(key=lambda m: m[0])
+    return matches[-1][1], len(matches)
+
+
+def _emit_line(text: str) -> None:
+    """Print a possibly-non-ASCII summary line without crashing on a narrow console."""
+    try:
+        print(text)
+    except UnicodeEncodeError:
+        enc = getattr(sys.stdout, "encoding", None) or "ascii"
+        sys.stdout.write(text.encode(enc, "replace").decode(enc) + "\n")
+
+
+def cmd_trial_ab(args) -> int:
+    entries_dir = Path("leaderboard") / "entries"
+    # Fairness gate: both setups must exist (id match) AND carry no task-specific hints.
+    for setup in (args.baseline, args.treatment):
+        if _validate_setup(setup) != 0:
+            return 2
+        hits = _setup_leakage_hits(setup)
+        if hits:
+            print(f"error: setup '{setup}' mentions challenge id(s) {hits}; "
+                  "an A/B setup must be general (no task-specific hints).", file=sys.stderr)
+            return 2
+    b_data, b_n = _find_ab_entry(args.trial, args.baseline, entries_dir)
+    t_data, t_n = _find_ab_entry(args.trial, args.treatment, entries_dir)
+    for setup, data in ((args.baseline, b_data), (args.treatment, t_data)):
+        if data is None:
+            print(f"error: no leaderboard entry for trial '{args.trial}' + setup "
+                  f"'{setup}'. Run: python run.py trial score <trial.json> "
+                  f"--setup {setup} --emit-entry <name>", file=sys.stderr)
+            return 2
+    if b_n > 1 or t_n > 1:
+        print(f"note: multiple entries found (baseline {b_n}, treatment {t_n}); "
+              "using the latest of each (median across runs is deferred).")
+    ab = compute_trial_ab(b_data, t_data, runs_per_arm=1)
+    ab["generated_at"] = new_run_id()
+    out_dir = Path("leaderboard") / "ab"
+    out_dir.mkdir(parents=True, exist_ok=True)
+    stem = f"trial-ab-{args.trial}-{args.baseline}-vs-{args.treatment}"
+    (out_dir / f"{stem}.json").write_text(json.dumps(ab, indent=2), encoding="utf-8")
+    print(f"  wrote {(out_dir / (stem + '.json')).as_posix()}")
+    if not args.no_strip:
+        (out_dir / f"{stem}.svg").write_text(render_ab_strip_svg(ab), encoding="utf-8")
+        (out_dir / f"{stem}.md").write_text(render_ab_strip_markdown(ab) + "\n", encoding="utf-8")
+        print(f"  wrote {(out_dir / (stem + '.svg')).as_posix()}")
+    _emit_line(render_ab_strip_markdown(ab))
     return 0
 
 
@@ -734,6 +906,21 @@ def _fixture_ids() -> set:
     return {p.name for p in base.iterdir() if p.is_dir()}
 
 
+def _setup_leakage_hits(name: str) -> list:
+    """Fixture ids whose name appears in the setup's non-manifest text (task leakage)."""
+    setup_dir = _setup_dir(name)
+    blob = []
+    for rel in _setup_files(setup_dir):
+        if rel == "setup.json":
+            continue
+        try:
+            blob.append((setup_dir / rel).read_text(encoding="utf-8"))
+        except (OSError, UnicodeDecodeError):
+            continue
+    joined = "\n".join(blob)
+    return sorted(fid for fid in _fixture_ids() if fid in joined)
+
+
 def cmd_setup_new(args) -> int:
     name = args.name
     setup_dir = _setup_dir(name)
@@ -825,15 +1012,7 @@ def cmd_setup_validate(args) -> int:
         for r in reasons:
             print(f"  - {r}")
         return 1
-    blob = []
-    for rel in _setup_files(setup_dir):
-        if rel == "setup.json":
-            continue
-        try:
-            blob.append((setup_dir / rel).read_text(encoding="utf-8"))
-        except (OSError, UnicodeDecodeError):
-            continue
-    hits = sorted(fid for fid in _fixture_ids() if fid in "\n".join(blob))
+    hits = _setup_leakage_hits(args.name)
     if hits:
         print(f"VALID (with WARNING): {data['id']}")
         print(f"  WARNING: setup text mentions challenge id(s): {hits}")
@@ -914,6 +1093,13 @@ def build_parser() -> argparse.ArgumentParser:
                           help="setup id that produced this result (REQUIRED with --emit-entry)")
     tr_score.add_argument("--emit-entry", dest="emit_entry")
     tr_score.set_defaults(func=cmd_trial_score)
+
+    tr_ab = tr_sub.add_parser("ab", help="pair a baseline vs +skill Trial run -> delta + shareable strip")
+    tr_ab.add_argument("--trial", required=True, help="trial id (e.g. trial-1)")
+    tr_ab.add_argument("--baseline", required=True, help="baseline setup id (arm A)")
+    tr_ab.add_argument("--treatment", required=True, help="setup id of baseline + the skill (arm B)")
+    tr_ab.add_argument("--no-strip", action="store_true", help="skip the SVG/markdown strip")
+    tr_ab.set_defaults(func=cmd_trial_ab)
 
     return p
 

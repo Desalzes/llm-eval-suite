@@ -1,0 +1,12 @@
+{
+  "id": "ponytail",
+  "name": "Ponytail (lazy senior dev)",
+  "description": "Agentic default plus the ponytail ruleset (YAGNI ladder: skip > stdlib > native > installed dep > one line > minimum). Vendored MIT from DietrichGebert/ponytail. Showcase A/B treatment arm vs agentic-default.",
+  "agent": "Agentic (default)",
+  "model": null,
+  "instructions_file": "instructions.md",
+  "skills": [],
+  "context_pack": null,
+  "badges": ["skill", "third-party"],
+  "created": "2026-06-15"
+}
